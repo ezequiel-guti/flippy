@@ -1,0 +1,25 @@
+.layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  height: 100vh;
+}
+
+.sidebarPane {
+  min-width: 0;
+}
+
+.mainPane {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 640px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebarPane {
+    display: none;
+  }
+}

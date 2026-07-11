@@ -1,0 +1,22 @@
+﻿
+# SDAD
+.claude/.session_tmp
+.sdad/eval/scenarios/*/result.json
+.sdad/audit/runs/
+*.tmp
+
+# flippy-api
+flippy-api/venv/
+flippy-api/__pycache__/
+flippy-api/**/__pycache__/
+flippy-api/.pytest_cache/
+flippy-api/.env
+
+# flippy-web
+flippy-web/node_modules/
+flippy-web/.next/
+flippy-web/.env.local
+flippy-web/*.pem
+
+# Codigo de referencia de otro proyecto del cliente — no es parte de Flippy
+examples/

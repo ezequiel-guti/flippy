@@ -1,0 +1,67 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./venv/Scripts/python.exe scripts/apply_migrations.py)",
+      "Bash(./venv/Scripts/python.exe -c ' *)",
+      "Bash(./venv/Scripts/python.exe -m pytest -q)",
+      "Bash(npm test *)",
+      "Bash(npm run *)",
+      "Bash(NODE_OPTIONS=\"--use-system-ca\" npm run build)",
+      "Bash(node --use-system-ca -e \"console.log\\('ok'\\)\")",
+      "Bash(openssl s_client -connect fonts.googleapis.com:443 -servername fonts.googleapis.com)",
+      "Bash(openssl x509 *)",
+      "Bash(mkdir -p \"/c/Users/Ezequiel/AppData/Local/Temp/claude/c--SharedVirtualBox-Projects-EDG-Flippy-src/c385bedf-a29e-4124-a706-7294b859dad3/scratchpad\")",
+      "Bash(mv avast-root.pem \"/c/Users/Ezequiel/AppData/Local/Temp/claude/c--SharedVirtualBox-Projects-EDG-Flippy-src/c385bedf-a29e-4124-a706-7294b859dad3/scratchpad/avast-root.pem\")",
+      "Bash(export NODE_EXTRA_CA_CERTS=\"/c/Users/Ezequiel/AppData/Local/Temp/claude/c--SharedVirtualBox-Projects-EDG-Flippy-src/c385bedf-a29e-4124-a706-7294b859dad3/scratchpad/avast-root.pem\")",
+      "Bash(git remote *)",
+      "Bash(git fetch *)",
+      "Bash(git add *)",
+      "Bash(grep -iE '\\\\.env$|\\\\.env\\\\.|venv/|node_modules/')"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run-hook.sh\" pre-tool-use-spec-gate"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run-hook.sh\" session-start"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run-hook.sh\" session-end"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "manual|auto",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run-hook.sh\" pre-compact"
+          }
+        ]
+      }
+    ]
+  }
+}

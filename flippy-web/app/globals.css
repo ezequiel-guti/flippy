@@ -1,0 +1,74 @@
+:root {
+  /* Color — ver SPEC.md §C Brand Token Sheet */
+  --color-primary: #8b2e3b;
+  --color-primary-dark: #6e232e;
+  --color-primary-light: #a8515c;
+
+  --color-bg: #f4f1ec;
+  --color-surface: #ffffff;
+  --color-border: #e0dad0;
+  --color-text-primary: #2e2b28;
+  --color-text-secondary: #6b665f;
+
+  --color-success: #3a7d5c;
+  --color-warning: #b8863b;
+  --color-error: #b3261e;
+  --color-info: #4a6fa5;
+
+  /* Typography */
+  --font-primary: var(--font-cormorant), Georgia, serif;
+  --font-secondary: var(--font-lato), -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-size-h1: 2rem;
+  --font-size-h2: 1.5rem;
+  --font-size-body: 1rem;
+  --font-size-label: 0.875rem;
+  --font-weight-bold: 700;
+  --font-weight-regular: 400;
+
+  /* Spacing and shape */
+  --border-radius-sm: 6px;
+  --border-radius-md: 12px;
+  --border-radius-lg: 20px;
+  --spacing-unit: 8px;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+body {
+  color: var(--color-text-primary);
+  background: var(--color-bg);
+  font-family: var(--font-secondary);
+  font-size: var(--font-size-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-primary);
+  font-weight: var(--font-weight-bold);
+}
+
+h1 {
+  font-size: var(--font-size-h1);
+}
+
+h2 {
+  font-size: var(--font-size-h2);
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
