@@ -22,4 +22,16 @@
   .sidebarPane {
     display: none;
   }
+
+  .mainPane {
+    display: flex;
+  }
+
+  .layout.showHistory .sidebarPane {
+    display: flex;
+  }
+
+  .layout.showHistory .mainPane {
+    display: none;
+  }
 }

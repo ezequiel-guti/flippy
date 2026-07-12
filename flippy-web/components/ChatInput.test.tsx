@@ -8,7 +8,7 @@ describe("ChatInput", () => {
 
     const input = screen.getByLabelText(/escribí tu consulta/i);
     fireEvent.change(input, { target: { value: "Hola" } });
-    fireEvent.click(screen.getByText("Enviar"));
+    fireEvent.click(screen.getByLabelText("Enviar"));
 
     expect(onSend).toHaveBeenCalledWith("Hola", null);
     expect(input).toHaveValue("");
@@ -16,7 +16,7 @@ describe("ChatInput", () => {
 
   it("disables the send button when there is no text or image", () => {
     render(<ChatInput onSend={jest.fn()} />);
-    expect(screen.getByText("Enviar")).toBeDisabled();
+    expect(screen.getByLabelText("Enviar")).toBeDisabled();
   });
 
   it("disables inputs when disabled prop is true", () => {

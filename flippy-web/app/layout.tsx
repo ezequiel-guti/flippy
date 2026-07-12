@@ -25,8 +25,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es">
-      <body className={`${cormorant.variable} ${lato.variable}`}>
+    <html lang="es" className={`${cormorant.variable} ${lato.variable}`}>
+      <body>
         {children}
         <script
           dangerouslySetInnerHTML={{

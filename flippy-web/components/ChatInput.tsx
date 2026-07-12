@@ -23,7 +23,7 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
   }
 
   return (
-    <form className={styles.form} onSubmit={handleSubmit}>
+    <form className={styles.inputbar} onSubmit={handleSubmit}>
       <label htmlFor="chat-message-input" className={styles.visuallyHidden}>
         Escribí tu consulta
       </label>
@@ -47,14 +47,21 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
       <input
         id="chat-message-input"
         type="text"
-        className={styles.textInput}
-        placeholder={imageFile ? `Imagen adjunta: ${imageFile.name}` : "Escribí tu consulta..."}
+        className={styles.field}
+        placeholder={imageFile ? `Imagen adjunta: ${imageFile.name}` : "Escribí tu mensaje…"}
         value={text}
         onChange={(e) => setText(e.target.value)}
         disabled={disabled}
       />
-      <button type="submit" className={styles.sendButton} disabled={disabled || (!text.trim() && !imageFile)}>
-        Enviar
+      <button
+        type="submit"
+        className={styles.send}
+        aria-label="Enviar"
+        disabled={disabled || (!text.trim() && !imageFile)}
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" width="20" height="20">
+          <path d="M12 19V5M6 11l6-6 6 6" />
+        </svg>
       </button>
     </form>
   );

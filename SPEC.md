@@ -14,77 +14,103 @@
 |---|-------|---------|--------|--------|
 | 1 | 2026-06-30 | §5 | Arquitectura actualizada: backend separado en FastAPI Python (v1 era Next.js API Routes) | Documento v2.0 corrige stack |
 | 2 | 2026-07-05 | §3, §5, §8, §9 | Split LLM propagado: routing texto→Gemini / imagen→Claude en F-02 y pipeline RAG; fila Gemini en costos; `GOOGLE_API_KEY` en secretos; caso de test de routing | Revisión de consistencia post-decisión LLM |
+| 3 | 2026-07-12 | §C | Brand Token Sheet corregido: reemplaza valores [proposed] por valores [explicit] del brandbook formal del cliente (`docs/Flipping Master - Manual de Marca.pdf`), no revisado hasta este punto. Colores/logo/reglas de contraste ahora exactos | Documento de marca formal encontrado en docs/ tras haber aprobado una versión con gaps propuestos por el desarrollador |
 
 ---
 
 ## §C — Identidad Visual
 
-**Material disponible:** Parcial — colores y tipografías definidos por el cliente en CLAUDE.md del proyecto; sin brandbook formal.
-**Fuente:** CLAUDE.md (sección "Identidad visual")
-**Color primario:** `#8B2E3B` (vino)
-**Tipografía primaria:** Cormorant Garamond (títulos)
-**Brand Token Sheet status:** Approved — 2026-07-11
+**Material disponible:** Completo — brandbook formal (`docs/Flipping Master - Manual de Marca.pdf`) + prototipo de referencia (`docs/flippy_prototipo_v4_claro (1).html`), descubiertos en `docs/` el 2026-07-12 (no habían sido revisados antes de este punto — corrección de un Brand Token Sheet anterior basado en datos parciales/propuestos).
+**Fuente:** Manual de Marca (Flipping Master) + prototipo HTML aprobado por el cliente
+**Color primario:** `#8B2E3B` (Vino Flipping)
+**Tipografía primaria:** Cormorant Garamond (títulos) — alt sistema: Georgia
+**Brand Token Sheet status:** Approved — 2026-07-12 (fuente: brandbook formal, reemplaza versión anterior basada en gaps propuestos)
 
-### BRAND TOKEN SHEET — Flippy
-Source: CLAUDE.md del proyecto (parcial) + propuesta de diseño para completar gaps
-Prepared: 2026-07-11
-Status: Approved — 2026-07-11 (desarrollador)
+### BRAND TOKEN SHEET — Flippy (Flipping Master)
+Source: Manual de Marca (PDF formal del cliente) + prototipo HTML v4
+Prepared: 2026-07-12
+Status: Approved — valores explícitos del brandbook, no requieren aprobación adicional
 
 **COLOR TOKENS**
 
-Primary
+Core (regla de uso 55% negro / 30% blanco / 12% vino / 3% dorado)
 ```
---color-primary:        #8B2E3B   [explicit] — "vino", acciones (botones, links activos)
---color-primary-dark:   #6E232E   [proposed] — hover/active state, -20% luminosidad
---color-primary-light:  #A8515C   [proposed] — estados disabled/subtle
-```
-
-Neutrals
-```
---color-bg:             #F4F1EC   [explicit] — "marfil", fondo de app
---color-surface:        #FFFFFF   [proposed] — cards, burbujas de chat del usuario
---color-border:         #E0DAD0   [proposed] — derivado de marfil, -10% luminosidad
---color-text-primary:   #2E2B28   [inferred] — "gris carbón", hex no especificado por el cliente
---color-text-secondary: #6B665F   [proposed] — texto secundario/metadata (timestamps, etc.)
+--color-onyx:            #0E0E10   [explicit] — "Negro Onyx", sofisticación, dominante 55%
+--color-white:            #FFFFFF   [explicit] — "Blanco Puro", dominante 30%
+--color-primary:         #8B2E3B   [explicit] — "Vino Flipping", identidad/acciones, 12%
+--color-gold:             #D4AF37   [explicit] — "Oro Metálico", acento CTA/premium, 3% — nunca como fondo dominante
 ```
 
-Semantic
+Neutrals (escala cálida — combina mejor con el vino que grises fríos)
 ```
---color-success:        #3A7D5C   [proposed] — confirmaciones (pago exitoso)
---color-warning:        #B8863B   [proposed] — banner de mora (RN-03)
---color-error:          #B3261E   [proposed] — errores de formulario/API
---color-info:           #4A6FA5   [proposed] — mensajes informativos
+--color-bg:              #F4F1EC   [explicit] — "Marfil/Crema", fondo principal
+--color-surface-alt:     #D9D6D1   [explicit] — "Gris Niebla", fondos de sección/tarjetas/separadores
+--color-text-secondary:  #6E6E73   [explicit] — "Gris Piedra", texto secundario/captions/metadata
+--color-text-primary:    #2B2B2D   [explicit] — "Gris Carbón", texto de cuerpo (más amable que negro puro)
+```
+
+Acentos complementarios (dosis pequeñas — nunca como fondo dominante)
+```
+--color-silver:          #C5C8CC   [explicit] — "Plata Platino", detalles modernos/foil
+--color-navy:            #1B2A3A   [explicit] — "Azul Noche", contextos corporativos/financieros → usado como --color-info
+--color-pine:            #1E3A30   [explicit] — "Verde Pino", estabilidad/crecimiento/ROI → usado como --color-success
+```
+
+Semantic (mapeo sobre acentos del brandbook; sin color de error explícito en el manual)
+```
+--color-success:         #1E3A30   [explicit] — Verde Pino (ROI, crecimiento)
+--color-info:             #1B2A3A   [explicit] — Azul Noche (contextos institucionales)
+--color-warning:          #D4AF37   [explicit] — Oro (uso moderado, no como fondo)
+--color-error:            #B3261E   [proposed] — el manual no define rojo de error; propuesto por no competir con vino ni con los acentos
+```
+
+Reglas de contraste (del manual — obligatorias)
+```
+Permitido:  vino sobre marfil/blanco · marfil sobre vino · dorado sobre negro o vino
+Evitar:     vino sobre negro (bajo contraste) · dorado sobre marfil (se pierde) · gris piedra sobre vino
 ```
 
 **TYPOGRAPHY TOKENS**
 ```
---font-primary:         "Cormorant Garamond", Georgia, serif   [explicit] — títulos, h1-h3
---font-secondary:       "Lato", -apple-system, sans-serif      [explicit] — UI y chat
---font-size-h1:         2rem      [proposed]
+--font-primary:         "Cormorant Garamond", Georgia, serif                    [explicit] — titulares, mayúsculas con tracking amplio
+--font-secondary:       "Lato", Arial, Calibri, -apple-system, sans-serif       [explicit] — cuerpo, UI, formularios
+--font-weight-light:    300   [explicit] — Lato Light para párrafos largos
+--font-weight-regular:  400   [explicit] — Lato Regular para UI
+--font-weight-bold:     700   [explicit] — Lato Bold para énfasis
+--font-size-h1:         2rem      [proposed] — no especificado en pt/px por el manual
 --font-size-h2:         1.5rem    [proposed]
 --font-size-body:       1rem      [proposed]
 --font-size-label:      0.875rem  [proposed]
---font-weight-bold:     700       [proposed]
---font-weight-regular:  400       [proposed]
+```
+
+**LOGO**
+```
+Versión color:      sobre fondos claros (marfil, blanco, gris niebla)   [explicit]
+Versión blanca:      sobre fondos oscuros (negro, vino, azul noche)      [explicit]
+Área de protección:  margen libre = altura del escudo                    [explicit]
+Tamaño mínimo:       96px pantalla / 25mm impresión (lockup horizontal); por debajo, solo el escudo   [explicit]
+Prohibido:           deformar, cambiar colores, usar sin contraste, rotar/inclinar   [explicit]
+Archivo:             extraído del prototipo → flippy-web/public/icons/logo-shield.png (207×245px, placeholder hasta recibir exports oficiales del diseñador — falta versión cuadrada para íconos PWA 192/512)
 ```
 
 **SPACING AND SHAPE**
 ```
---border-radius-sm:     6px    [proposed]
---border-radius-md:     12px   [proposed]
---border-radius-lg:     20px   [proposed] — burbujas de chat
---spacing-unit:         8px    [proposed]
+--border-radius-sm:     6px    [inferred] — del prototipo (chips, botones pequeños)
+--border-radius-md:     12px   [inferred] — del prototipo (inputs, botones primarios)
+--border-radius-lg:     18px   [explicit] — del prototipo (.msg — burbujas de chat)
+--border-radius-tail:   5px    [explicit] — del prototipo (esquina de "cola" en burbujas)
+--spacing-unit:         8px    [proposed] — no especificado, consistente con el prototipo
 ```
 
 **GAPS RESUELTOS**
-- Hex de "gris carbón" no especificado → propuesto `#2E2B28` (cálido, compatible con marfil)
-- Sin colores semánticos definidos → propuestos con base en la paleta existente (vino como ancla)
-- Sin reglas de logo (el cliente no proveyó archivo de logo) → pendiente cuando el cliente lo entregue
-- Sin unidad de espaciado/radio de bordes definida → propuesto 8px base, radios generosos (estética editorial acorde a Cormorant Garamond)
+- Color de error no definido en el manual → propuesto `#B3261E`, elegido por no competir visualmente con vino/oro/pino/azul noche
+- Tamaños de fuente en px/rem no definidos (el manual da jerarquía cualitativa H1/H2/Cuerpo/Caption, no valores) → propuesta una escala estándar
+- Logo cuadrado para íconos PWA (192×192, 512×512) no disponible — el shield extraído del prototipo es 207×245 (no cuadrado) → placeholder hasta recibir exports oficiales
 
 **APROBACIÓN**
-- [x] Tokens [proposed] revisados y aprobados por el desarrollador — 2026-07-11
-- [ ] Logo del cliente recibido (pendiente — no bloquea UI de chat, sí bloquea header final)
+- [x] Tokens [explicit] — provienen del brandbook formal del cliente, no requieren aprobación adicional
+- [x] Tokens [proposed]/[inferred] revisados y aprobados por el desarrollador — 2026-07-12
+- [ ] Logo cuadrado oficial para íconos PWA (pendiente del diseñador del cliente)
 
 ---
 
@@ -555,3 +581,4 @@ Un incremento está completo cuando:
 | Incremento 3 | Auth F-01 — Supabase Auth (Hito 1) | claude-sonnet-5 | 2026-07-09 | Registro/login/refresh/me vía Supabase Auth (GoTrue), validación de JWT contra JWKS del proyecto (ES256), rol admin por ADMIN_EMAILS, migración 0004 (FK users→auth.users). Estructura modular (router/services/model) adaptada de examples/main-api del cliente. 6 tests pytest verdes contra Supabase real, con limpieza automática de usuarios de prueba |
 | Incremento 3.1 | Fix crítico de seguridad — RLS deshabilitado | claude-sonnet-5 | 2026-07-09 | Supabase reportó alerta crítica: las 6 tablas públicas eran accesibles sin autenticación (rls_disabled_in_public). Migración 0005 habilita Row-Level Security en las 6 tablas — flippy-api sigue funcionando (usa service_role, bypassa RLS); acceso público vía REST bloqueado |
 | Incremento 3.2 | Fix estabilidad — leeway en validación JWT | claude-sonnet-5 | 2026-07-09 | Tests intermitentes: ImmatureSignatureError por ~1s de jitter de reloj entre esta VM y Supabase. Agregado leeway=10 en jwt.decode (security.py) — práctica estándar para validar JWT entre sistemas distintos |
+| Incremento 4 | UI de chat + sidebar (F-02 layout, F-03) | claude-sonnet-5 | 2026-07-12 | Construida inicialmente sin revisar docs/ a fondo (layout desktop genérico, colores propuestos). Corrección: encontrado brandbook formal + prototipo HTML del cliente en docs/, no revisados hasta este punto — reescritos §C (colores/logo/tipografía explícitos del Manual de Marca Flipping Master) y todos los componentes de chat para ser fieles al prototipo (chathead con estado, chips de sugerencias, burbujas correctas, sidebar con búsqueda/agrupación por fecha/footer). Logo real extraído del prototipo. Responsive: mobile fiel al prototipo (pantallas separadas con toggle), desktop con sidebar persistente (cumple criterio §8 Chrome desktop). 18 tests Jest verdes, build de producción limpio, verificado visualmente con Playwright (screenshots + estilos computados) — detectados y corregidos 2 bugs de CSS (fuentes cayendo a fallback por scope de custom properties; sidebar no ocupando ancho completo en mobile) que no aparecían en los tests |

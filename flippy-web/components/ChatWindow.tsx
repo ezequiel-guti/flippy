@@ -3,14 +3,19 @@
 import { useEffect, useRef, useState } from "react";
 import type { ChatMessageData } from "@/types/chat";
 import ChatMessage from "./ChatMessage";
+import ChatChips from "./ChatChips";
 import ChatInput from "./ChatInput";
+import ChatHeader from "./ChatHeader";
 import styles from "./ChatWindow.module.css";
+
+const STARTER_SUGGESTIONS = ["¿Cómo calculo el ROI de un flip?", "Ideas para remodelar"];
 
 interface ChatWindowProps {
   initialMessages: ChatMessageData[];
+  onOpenHistory: () => void;
 }
 
-export default function ChatWindow({ initialMessages }: ChatWindowProps) {
+export default function ChatWindow({ initialMessages, onOpenHistory }: ChatWindowProps) {
   const [messages, setMessages] = useState<ChatMessageData[]>(initialMessages);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +29,7 @@ export default function ChatWindow({ initialMessages }: ChatWindowProps) {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  async function handleSend(text: string, imageFile: File | null) {
+  async function sendMessage(text: string, imageFile: File | null) {
     const userMessage: ChatMessageData = {
       id: crypto.randomUUID(),
       role: "user",
@@ -53,14 +58,18 @@ export default function ChatWindow({ initialMessages }: ChatWindowProps) {
     }
   }
 
+  const showStarterChips = messages.length <= 1 && messages.every((m) => m.role === "assistant");
+
   return (
     <div className={styles.window}>
+      <ChatHeader onOpenHistory={onOpenHistory} />
       <div className={styles.messages} role="log" aria-live="polite">
         {messages.length === 0 ? (
-          <p className={styles.emptyState}>Empezá la conversación escribiendo tu consulta.</p>
+          <p className={styles.emptyState}>Hola, soy Flippy. Te ayudo en lo que necesites.</p>
         ) : (
           messages.map((message) => <ChatMessage key={message.id} message={message} />)
         )}
+        {showStarterChips && <ChatChips suggestions={STARTER_SUGGESTIONS} onSelect={(s) => sendMessage(s, null)} />}
         {isSending && <p className={styles.loadingIndicator}>Flippy está escribiendo…</p>}
         {error && (
           <p className={styles.errorMessage} role="alert">
@@ -69,7 +78,7 @@ export default function ChatWindow({ initialMessages }: ChatWindowProps) {
         )}
         <div ref={bottomRef} />
       </div>
-      <ChatInput onSend={handleSend} disabled={isSending} />
+      <ChatInput onSend={sendMessage} disabled={isSending} />
     </div>
   );
 }

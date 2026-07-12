@@ -1,19 +1,27 @@
 :root {
-  /* Color — ver SPEC.md §C Brand Token Sheet */
+  /* Color — ver SPEC.md §C Brand Token Sheet (fuente: Manual de Marca Flipping Master) */
+  --color-onyx: #0e0e10;
+  --color-white: #ffffff;
   --color-primary: #8b2e3b;
-  --color-primary-dark: #6e232e;
-  --color-primary-light: #a8515c;
+  --color-primary-tint: rgba(139, 46, 59, 0.1);
+  --color-primary-hover: #7a2733;
+  --color-gold: #d4af37;
 
   --color-bg: #f4f1ec;
-  --color-surface: #ffffff;
-  --color-border: #e0dad0;
-  --color-text-primary: #2e2b28;
-  --color-text-secondary: #6b665f;
+  --color-surface-alt: #d9d6d1;
+  --color-text-secondary: #6e6e73;
+  --color-text-primary: #2b2b2d;
 
-  --color-success: #3a7d5c;
-  --color-warning: #b8863b;
+  --color-silver: #c5c8cc;
+  --color-navy: #1b2a3a;
+  --color-pine: #1e3a30;
+
+  --color-success: var(--color-pine);
+  --color-info: var(--color-navy);
+  --color-warning: var(--color-gold);
   --color-error: #b3261e;
-  --color-info: #4a6fa5;
+
+  --color-line: rgba(43, 43, 45, 0.12);
 
   /* Typography */
   --font-primary: var(--font-cormorant), Georgia, serif;
@@ -22,13 +30,15 @@
   --font-size-h2: 1.5rem;
   --font-size-body: 1rem;
   --font-size-label: 0.875rem;
-  --font-weight-bold: 700;
+  --font-weight-light: 300;
   --font-weight-regular: 400;
+  --font-weight-bold: 700;
 
   /* Spacing and shape */
   --border-radius-sm: 6px;
   --border-radius-md: 12px;
-  --border-radius-lg: 20px;
+  --border-radius-lg: 18px;
+  --border-radius-tail: 5px;
   --spacing-unit: 8px;
 }
 
@@ -43,6 +53,7 @@ body {
   background: var(--color-bg);
   font-family: var(--font-secondary);
   font-size: var(--font-size-body);
+  font-weight: var(--font-weight-regular);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
