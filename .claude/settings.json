@@ -63,7 +63,10 @@
       "Bash(curl -sk \"https://flippy-web-production.up.railway.app/chat\" --max-time 15)",
       "Bash(./venv/Scripts/python.exe -m pip install -q pdfplumber==0.11.4 python-docx==1.1.2 tiktoken==0.8.0)",
       "Bash(./venv/Scripts/python.exe -m pytest tests/test_documents.py -v)",
-      "Bash(./venv/Scripts/python.exe -m pip install -q python-multipart==0.0.12)"
+      "Bash(./venv/Scripts/python.exe -m pip install -q python-multipart==0.0.12)",
+      "Bash(tail -3 ../SPEC.md)",
+      "Bash(pwd; find *)",
+      "Read(//c//**)"
     ],
     "additionalDirectories": [
       "\\tmp"

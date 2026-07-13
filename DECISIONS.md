@@ -85,3 +85,13 @@ Racional: consistente con el patrón ya usado en supabase_auth.py (Incremento 3)
 Alternativas consideradas: SDK oficial de OpenAI (descartado — dependencia más pesada para un solo endpoint usado); conteo de tokens por palabras (descartado — impreciso, podría generar chunks fuera de rango).
 Impacto: `app/integrations/supabase_storage.py`, `app/integrations/openai_embeddings.py`, `app/modules/documents/{chunking,parsers,model,services,router}.py`. Nuevas dependencias: pdfplumber, python-docx, tiktoken, python-multipart. Límite de 20MB por archivo agregado (hallazgo propio de seguridad — no había límite antes, riesgo de DoS por upload). 11 tests pytest verdes contra Storage/OpenAI/pgvector reales.
 ════════════════════════════════════════════════════════
+
+════════════════════════════════════════════════════════
+📋 DECISIÓN — Panel de admin sin prototipo de referencia (Incremento 6)
+════════════════════════════════════════════════════════
+Fecha: 2026-07-13
+Decisión: Maquetar /login y /admin con los tokens de marca ya aprobados (§C) pero sin un layout de referencia del cliente, ya que el prototipo HTML solo cubre las pantallas de usuario final (inicio/chat/historial/acceso socios) y no el panel de administración.
+Racional: a diferencia del Incremento 4 (donde se descartó una UI ya construida por no seguir el prototipo), acá no existe prototipo que contradecir — es una superficie interna (solo la usa el admin) sin peso de marca cliente-facing. Se prioriza funcionalidad clara sobre fidelidad visual estricta.
+Alternativas consideradas: esperar a que el cliente provea un mockup del panel de admin antes de construir (descartado — bloquearía innecesariamente el avance de Hito 2; el panel de admin no es una superficie que el cliente final (socios) vea).
+Impacto: app/login/page.tsx (primera pieza real de F-01 frontend — hasta ahora solo existía el backend), app/admin/page.tsx, components/AdminUploadForm.tsx, components/AdminDocumentTable.tsx, services/api.ts extendido con apiUpload/apiDelete/ApiError. Polling cada 4s mientras haya documentos en processing, sin WebSocket/SSE para esto (no lo justifica la frecuencia de uso — solo el admin sube documentos ocasionalmente). 28 tests Jest verdes (10 nuevos), build de producción limpio.
+════════════════════════════════════════════════════════

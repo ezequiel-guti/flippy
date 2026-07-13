@@ -1,0 +1,33 @@
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--color-bg);
+  min-height: 100vh;
+}
+
+.title {
+  font-family: var(--font-primary);
+  font-size: 1.75rem;
+  color: var(--color-text-primary);
+}
+
+.subtitle {
+  font-family: var(--font-secondary);
+  color: var(--color-text-secondary);
+  margin-bottom: 8px;
+}
+
+.loading {
+  font-family: var(--font-secondary);
+  color: var(--color-text-secondary);
+}
+
+.error {
+  font-family: var(--font-secondary);
+  font-size: var(--font-size-label);
+  color: var(--color-error);
+}
