@@ -176,3 +176,16 @@
   font-size: 11px;
   color: var(--color-text-secondary);
 }
+
+.adminLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.adminLink:hover {
+  color: var(--color-primary);
+}
