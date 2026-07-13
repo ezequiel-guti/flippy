@@ -75,3 +75,13 @@ Racional: consistente con la decisión del Incremento 1 de mantener el monorepo 
 Alternativas consideradas: 2 repos GitHub separados como indica §7 originalmente (pospuesto — se revisará antes de la entrega final al cliente si corresponde separar).
 Impacto: flippy-api con start command `uvicorn main:app --host 0.0.0.0 --port $PORT` y variables de entorno de producción cargadas manualmente en Railway; flippy-web con `NEXT_PUBLIC_API_BASE_URL` apuntando al dominio público de flippy-api. Ambos servicios verificados end-to-end: /api/v1/health → 200, /chat → renderiza correctamente.
 ════════════════════════════════════════════════════════
+
+════════════════════════════════════════════════════════
+📋 DECISIÓN — Pipeline de ingesta de documentos vía httpx directo (Incremento 5)
+════════════════════════════════════════════════════════
+Fecha: 2026-07-13
+Decisión: Implementar la ingesta de documentos (F-05 backend) con wrappers httpx propios sobre Supabase Storage REST API y OpenAI embeddings REST API, en vez de instalar los SDKs oficiales (supabase-py, openai). Chunking con tiktoken (tokenización real de OpenAI) en vez de conteo aproximado por palabras/caracteres. Procesamiento en background task de FastAPI (no bloquea la respuesta al admin).
+Racional: consistente con el patrón ya usado en supabase_auth.py (Incremento 3) — wrappers delgados evitan dependencias pesadas y mantienen el control total sobre errores/timeouts. tiktoken asegura que el chunking de 500 tokens (SPEC.md §5) sea exacto y no una aproximación, evitando chunks que excedan el límite real de contexto.
+Alternativas consideradas: SDK oficial de OpenAI (descartado — dependencia más pesada para un solo endpoint usado); conteo de tokens por palabras (descartado — impreciso, podría generar chunks fuera de rango).
+Impacto: `app/integrations/supabase_storage.py`, `app/integrations/openai_embeddings.py`, `app/modules/documents/{chunking,parsers,model,services,router}.py`. Nuevas dependencias: pdfplumber, python-docx, tiktoken, python-multipart. Límite de 20MB por archivo agregado (hallazgo propio de seguridad — no había límite antes, riesgo de DoS por upload). 11 tests pytest verdes contra Storage/OpenAI/pgvector reales.
+════════════════════════════════════════════════════════

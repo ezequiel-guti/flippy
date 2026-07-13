@@ -48,7 +48,22 @@
       "Bash(node /c/Users/Ezequiel/AppData/Local/Temp/claude/c--SharedVirtualBox-Projects-EDG-Flippy-src/c385bedf-a29e-4124-a706-7294b859dad3/scratchpad/check_styles.js)",
       "Bash(npx --yes playwright@1.48.0 screenshot --viewport-size=390,844 http://localhost:3000/chat /c/Users/Ezequiel/AppData/Local/Temp/claude/c--SharedVirtualBox-Projects-EDG-Flippy-src/c385bedf-a29e-4124-a706-7294b859dad3/scratchpad/chat-mobile2.png)",
       "Bash(npx --yes playwright@1.48.0 screenshot --viewport-size=1280,800 http://localhost:3000/chat /c/Users/Ezequiel/AppData/Local/Temp/claude/c--SharedVirtualBox-Projects-EDG-Flippy-src/c385bedf-a29e-4124-a706-7294b859dad3/scratchpad/chat-desktop2.png)",
-      "Bash(node /c/Users/Ezequiel/AppData/Local/Temp/claude/c--SharedVirtualBox-Projects-EDG-Flippy-src/c385bedf-a29e-4124-a706-7294b859dad3/scratchpad/check_mobile_toggle.js /c/Users/Ezequiel/AppData/Local/Temp/claude/c--SharedVirtualBox-Projects-EDG-Flippy-src/c385bedf-a29e-4124-a706-7294b859dad3/scratchpad)"
+      "Bash(node /c/Users/Ezequiel/AppData/Local/Temp/claude/c--SharedVirtualBox-Projects-EDG-Flippy-src/c385bedf-a29e-4124-a706-7294b859dad3/scratchpad/check_mobile_toggle.js /c/Users/Ezequiel/AppData/Local/Temp/claude/c--SharedVirtualBox-Projects-EDG-Flippy-src/c385bedf-a29e-4124-a706-7294b859dad3/scratchpad)",
+      "Bash(git push *)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" \"https://flippy-api-production.up.railway.app/api/v1/health\" --max-time 15)",
+      "Bash(curl -s \"https://flippy-api-production.up.railway.app/api/v1/health\" --max-time 15)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" -L \"https://flippy-web-production.up.railway.app/\" --max-time 15)",
+      "Bash(curl -s --cacert /c/Users/Ezequiel/AppData/Local/Temp/claude/c--SharedVirtualBox-Projects-EDG-Flippy-src/c385bedf-a29e-4124-a706-7294b859dad3/scratchpad/avast-root.pem -o /dev/null -w 'HTTP %{http_code}\\\\n' https://flippy-api-production.up.railway.app/api/v1/health --max-time 15)",
+      "Bash(curl -s --cacert /c/Users/Ezequiel/AppData/Local/Temp/claude/c--SharedVirtualBox-Projects-EDG-Flippy-src/c385bedf-a29e-4124-a706-7294b859dad3/scratchpad/avast-root.pem https://flippy-api-production.up.railway.app/api/v1/health --max-time 15)",
+      "Bash(curl -s --cacert /c/Users/Ezequiel/AppData/Local/Temp/claude/c--SharedVirtualBox-Projects-EDG-Flippy-src/c385bedf-a29e-4124-a706-7294b859dad3/scratchpad/avast-root.pem -o /dev/null -w 'HTTP %{http_code}\\\\n' -L https://flippy-web-production.up.railway.app/ --max-time 15)",
+      "Bash(curl -sk -o /dev/null -w \"HTTP %{http_code}\\\\n\" \"https://flippy-api-production.up.railway.app/api/v1/health\" --max-time 15)",
+      "Bash(curl -sk -o /dev/null -w \"HTTP %{http_code}\\\\n\" -L \"https://flippy-web-production.up.railway.app/\" --max-time 15)",
+      "Bash(curl -sk \"https://flippy-api-production.up.railway.app/api/v1/health\" --max-time 15)",
+      "Bash(curl -sk -D - -o /dev/null \"https://flippy-web-production.up.railway.app/\" --max-time 15)",
+      "Bash(curl -sk \"https://flippy-web-production.up.railway.app/chat\" --max-time 15)",
+      "Bash(./venv/Scripts/python.exe -m pip install -q pdfplumber==0.11.4 python-docx==1.1.2 tiktoken==0.8.0)",
+      "Bash(./venv/Scripts/python.exe -m pytest tests/test_documents.py -v)",
+      "Bash(./venv/Scripts/python.exe -m pip install -q python-multipart==0.0.12)"
     ],
     "additionalDirectories": [
       "\\tmp"
