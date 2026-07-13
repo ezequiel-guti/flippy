@@ -25,4 +25,17 @@ describe("AdminUploadForm", () => {
 
     await waitFor(() => expect(screen.getByText(/no pudimos subir el archivo/i)).toBeInTheDocument());
   });
+
+  it("warns and blocks submission when the file name already exists", () => {
+    const onUpload = jest.fn().mockResolvedValue(undefined);
+    render(<AdminUploadForm onUpload={onUpload} existingNames={["documento.txt"]} />);
+
+    const file = new File(["contenido"], "documento.txt", { type: "text/plain" });
+    const input = screen.getByLabelText(/subir documento al corpus/i) as HTMLInputElement;
+    fireEvent.change(input, { target: { files: [file] } });
+
+    expect(screen.getByText(/ya existe un archivo/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Subir"));
+    expect(onUpload).not.toHaveBeenCalled();
+  });
 });

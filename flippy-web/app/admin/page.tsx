@@ -61,7 +61,7 @@ export default function AdminPage() {
       <h1 className={styles.title}>Administración de documentos</h1>
       <p className={styles.subtitle}>Corpus documental de Flippy — PDF, Word, texto e imágenes.</p>
 
-      <AdminUploadForm onUpload={handleUpload} />
+      <AdminUploadForm onUpload={handleUpload} existingNames={documents.map((d) => d.name)} />
 
       {error && (
         <p className={styles.error} role="alert">
