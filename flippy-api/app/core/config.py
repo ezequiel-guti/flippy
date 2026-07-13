@@ -19,6 +19,14 @@ class Settings(BaseSettings):
     mp_webhook_secret: str = ""
 
     admin_emails: str = ""
+    web_origin: str = ""
+
+    @property
+    def cors_origins(self) -> list[str]:
+        origins = ["http://localhost:3000"]
+        if self.web_origin:
+            origins.append(self.web_origin)
+        return origins
 
     @field_validator("supabase_url")
     @classmethod

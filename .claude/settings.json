@@ -66,7 +66,8 @@
       "Bash(./venv/Scripts/python.exe -m pip install -q python-multipart==0.0.12)",
       "Bash(tail -3 ../SPEC.md)",
       "Bash(pwd; find *)",
-      "Read(//c//**)"
+      "Read(//c//**)",
+      "Bash(./venv/Scripts/python.exe -m pytest tests/test_cors.py -v)"
     ],
     "additionalDirectories": [
       "\\tmp"

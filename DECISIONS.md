@@ -95,3 +95,13 @@ Racional: a diferencia del Incremento 4 (donde se descartó una UI ya construida
 Alternativas consideradas: esperar a que el cliente provea un mockup del panel de admin antes de construir (descartado — bloquearía innecesariamente el avance de Hito 2; el panel de admin no es una superficie que el cliente final (socios) vea).
 Impacto: app/login/page.tsx (primera pieza real de F-01 frontend — hasta ahora solo existía el backend), app/admin/page.tsx, components/AdminUploadForm.tsx, components/AdminDocumentTable.tsx, services/api.ts extendido con apiUpload/apiDelete/ApiError. Polling cada 4s mientras haya documentos en processing, sin WebSocket/SSE para esto (no lo justifica la frecuencia de uso — solo el admin sube documentos ocasionalmente). 28 tests Jest verdes (10 nuevos), build de producción limpio.
 ════════════════════════════════════════════════════════
+
+════════════════════════════════════════════════════════
+🚨 DECISIÓN — Fix crítico: CORS faltante bloqueaba todo el frontend (Incremento 6.1)
+════════════════════════════════════════════════════════
+Fecha: 2026-07-13
+Decisión: Agregar CORSMiddleware a flippy-api, con origins permitidos configurables via WEB_ORIGIN (mas localhost:3000 fijo para desarrollo).
+Racional: el usuario reportó error al hacer login en producción. Diagnóstico: flippy-api nunca tuvo CORSMiddleware configurado desde su creación (Incremento 1) — cualquier pedido del navegador desde flippy-web hacia flippy-api en un dominio distinto era bloqueado silenciosamente por la política de mismo origen, sin llegar siquiera a validar credenciales. Esto afectaba TODOS los endpoints, no solo login — bloqueaba también el panel de admin recién construido.
+Alternativas consideradas: allow_origins=["*"] (descartado — con allow_credentials=True el spec de CORS prohíbe wildcard, y de todos modos es mas laxo de lo necesario para un solo frontend conocido).
+Impacto: main.py agrega CORSMiddleware; config.py expone cors_origins (localhost:3000 + WEB_ORIGIN); WEB_ORIGIN documentado en .env.example, debe cargarse en Railway (flippy-api) con el dominio de flippy-web. 2 tests pytest nuevos (origin permitido / origin no permitido).
+════════════════════════════════════════════════════════
