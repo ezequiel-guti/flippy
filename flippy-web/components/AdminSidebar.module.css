@@ -50,7 +50,7 @@
 }
 
 .navItemActive {
-  background: var(--color-primary-tint);
+  font-weight: var(--font-weight-bold);
 }
 
 .footer {
