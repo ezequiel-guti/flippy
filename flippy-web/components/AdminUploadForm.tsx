@@ -14,11 +14,13 @@ export default function AdminUploadForm({ onUpload, existingNames = [] }: AdminU
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [duplicateName, setDuplicateName] = useState<string | null>(null);
+  const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function handleFileChange() {
     const file = fileInputRef.current?.files?.[0];
     setError(null);
+    setSelectedFileName(file?.name ?? null);
     if (file && existingNames.includes(file.name)) {
       setDuplicateName(file.name);
     } else {
@@ -40,6 +42,7 @@ export default function AdminUploadForm({ onUpload, existingNames = [] }: AdminU
     try {
       await onUpload(file);
       if (fileInputRef.current) fileInputRef.current.value = "";
+      setSelectedFileName(null);
       setDuplicateName(null);
     } catch {
       setError("No pudimos subir el archivo. Intentá de nuevo.");
@@ -50,16 +53,29 @@ export default function AdminUploadForm({ onUpload, existingNames = [] }: AdminU
 
   return (
     <form className={styles.form} onSubmit={handleSubmit}>
-      <label className={styles.field}>
-        Subir documento al corpus
-        <input
-          type="file"
-          accept={ACCEPTED_EXTENSIONS}
-          ref={fileInputRef}
-          disabled={isUploading}
-          onChange={handleFileChange}
-        />
-      </label>
+      <div className={styles.field}>
+        <span className={styles.fieldLabel}>Subir documento al corpus</span>
+        <div className={styles.picker}>
+          <button
+            type="button"
+            className={styles.chooseButton}
+            disabled={isUploading}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            Elegir archivo
+          </button>
+          <span className={styles.fileName}>{selectedFileName ?? "Ningún archivo seleccionado"}</span>
+          <input
+            type="file"
+            accept={ACCEPTED_EXTENSIONS}
+            ref={fileInputRef}
+            disabled={isUploading}
+            onChange={handleFileChange}
+            className={styles.hiddenInput}
+            aria-label="Subir documento al corpus"
+          />
+        </div>
+      </div>
       <button type="submit" className={styles.submit} disabled={isUploading || !!duplicateName}>
         {isUploading ? "Subiendo…" : "Subir"}
       </button>
