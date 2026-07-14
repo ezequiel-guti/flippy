@@ -50,8 +50,7 @@
 }
 
 .navItemActive {
-  background: var(--color-primary);
-  color: var(--color-white);
+  background: var(--color-primary-tint);
 }
 
 .footer {
