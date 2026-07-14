@@ -1,12 +1,22 @@
-.page {
+.layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  height: 100vh;
+}
+
+.sidebarPane {
+  min-width: 0;
+}
+
+.mainPane {
+  min-width: 0;
+  overflow-y: auto;
   max-width: 720px;
-  margin: 0 auto;
   padding: 32px 24px;
   display: flex;
   flex-direction: column;
   gap: 16px;
   background: var(--color-bg);
-  min-height: 100vh;
 }
 
 .title {
@@ -30,4 +40,11 @@
   font-family: var(--font-secondary);
   font-size: var(--font-size-label);
   color: var(--color-error);
+}
+
+@media (max-width: 640px) {
+  .layout {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
 }

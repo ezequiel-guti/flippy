@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiGet, apiUpload, apiDelete, ApiError } from "@/services/api";
 import type { DocumentSummary } from "@/types/document";
+import AdminSidebar from "@/components/AdminSidebar";
 import AdminUploadForm from "@/components/AdminUploadForm";
 import AdminDocumentTable from "@/components/AdminDocumentTable";
 import styles from "./page.module.css";
@@ -57,23 +58,28 @@ export default function AdminPage() {
   }
 
   return (
-    <main className={styles.page}>
-      <h1 className={styles.title}>Administración de documentos</h1>
-      <p className={styles.subtitle}>Corpus documental de Flippy — PDF, Word, texto e imágenes.</p>
+    <div className={styles.layout}>
+      <aside className={styles.sidebarPane}>
+        <AdminSidebar activeHref="/admin" />
+      </aside>
+      <main className={styles.mainPane}>
+        <h1 className={styles.title}>Documentos</h1>
+        <p className={styles.subtitle}>Corpus documental de Flippy — PDF, Word, texto, JSON, HTML e imágenes.</p>
 
-      <AdminUploadForm onUpload={handleUpload} existingNames={documents.map((d) => d.name)} />
+        <AdminUploadForm onUpload={handleUpload} existingNames={documents.map((d) => d.name)} />
 
-      {error && (
-        <p className={styles.error} role="alert">
-          {error}
-        </p>
-      )}
+        {error && (
+          <p className={styles.error} role="alert">
+            {error}
+          </p>
+        )}
 
-      {isLoading ? (
-        <p className={styles.loading}>Cargando documentos…</p>
-      ) : (
-        <AdminDocumentTable documents={documents} onDelete={handleDelete} />
-      )}
-    </main>
+        {isLoading ? (
+          <p className={styles.loading}>Cargando documentos…</p>
+        ) : (
+          <AdminDocumentTable documents={documents} onDelete={handleDelete} />
+        )}
+      </main>
+    </div>
   );
 }

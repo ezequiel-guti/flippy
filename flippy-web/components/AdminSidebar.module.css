@@ -1,0 +1,70 @@
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 18px 14px;
+  background: var(--color-surface-alt);
+  border-right: 1px solid var(--color-line);
+  height: 100%;
+  overflow-y: auto;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 4px 6px 20px;
+}
+
+.brandName {
+  font-family: var(--font-primary);
+  font-size: 17px;
+  color: var(--color-text-primary);
+}
+
+.navList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.navItem {
+  display: block;
+  font-family: var(--font-secondary);
+  font-size: 13.5px;
+  color: var(--color-text-primary);
+  text-decoration: none;
+  border-radius: var(--border-radius-sm);
+  padding: 10px 11px;
+}
+
+.navItem:hover {
+  background: rgba(43, 43, 45, 0.05);
+}
+
+.navItemActive {
+  background: var(--color-primary-tint);
+  color: var(--color-primary);
+  font-weight: var(--font-weight-bold);
+}
+
+.footer {
+  margin-top: auto;
+  padding: 13px 8px 2px;
+  border-top: 1px solid var(--color-line);
+}
+
+.backLink {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-secondary);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+}
+
+.backLink:hover {
+  color: var(--color-primary);
+}
