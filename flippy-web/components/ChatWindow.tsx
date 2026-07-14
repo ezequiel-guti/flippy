@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { ChatMessageData } from "@/types/chat";
+import { apiStream } from "@/services/api";
 import ChatMessage from "./ChatMessage";
 import ChatChips from "./ChatChips";
 import ChatInput from "./ChatInput";
@@ -11,11 +12,13 @@ import styles from "./ChatWindow.module.css";
 const STARTER_SUGGESTIONS = ["¿Cómo calculo el ROI de un flip?", "Ideas para remodelar"];
 
 interface ChatWindowProps {
+  chatId: string;
   initialMessages: ChatMessageData[];
   onOpenHistory: () => void;
+  onMessageSent?: () => void;
 }
 
-export default function ChatWindow({ initialMessages, onOpenHistory }: ChatWindowProps) {
+export default function ChatWindow({ chatId, initialMessages, onOpenHistory, onMessageSent }: ChatWindowProps) {
   const [messages, setMessages] = useState<ChatMessageData[]>(initialMessages);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,26 +42,61 @@ export default function ChatWindow({ initialMessages, onOpenHistory }: ChatWindo
     };
     setMessages((prev) => [...prev, userMessage]);
     setError(null);
-    setIsSending(true);
 
-    // TODO(Hito 2): reemplazar por llamada real a flippy-api (SSE) via services/api.ts
+    if (imageFile) {
+      // TODO(F-04): analisis de imagen con Claude 3.5 Sonnet — todavia no implementado
+      setError("El análisis de imágenes todavía no está disponible. Probá tu consulta solo con texto.");
+      return;
+    }
+    if (!text) return;
+
+    setIsSending(true);
+    const assistantId = crypto.randomUUID();
+    setMessages((prev) => [
+      ...prev,
+      { id: assistantId, role: "assistant", content: "", createdAt: new Date().toISOString() },
+    ]);
+
     try {
-      await new Promise((resolve) => setTimeout(resolve, 600));
-      const assistantMessage: ChatMessageData = {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: "Esta es una respuesta de ejemplo — la integración con el backend RAG llega en el Hito 2.",
-        createdAt: new Date().toISOString(),
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
+      const stream = await apiStream(`/api/v1/chats/${chatId}/messages`, { content: text });
+      const reader = stream.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let accumulated = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split("\n\n");
+        buffer = events.pop() ?? "";
+
+        for (const event of events) {
+          const line = event.trim();
+          if (!line.startsWith("data: ")) continue;
+          const data = line.slice("data: ".length);
+          if (data === "[DONE]") continue;
+
+          const parsed = JSON.parse(data) as { text?: string; error?: string };
+          if (parsed.error) {
+            setError(parsed.error);
+          } else if (parsed.text) {
+            accumulated += parsed.text;
+            const snapshot = accumulated;
+            setMessages((prev) => prev.map((m) => (m.id === assistantId ? { ...m, content: snapshot } : m)));
+          }
+        }
+      }
+      onMessageSent?.();
     } catch {
       setError("No pudimos enviar tu mensaje. Intentá de nuevo.");
+      setMessages((prev) => prev.filter((m) => m.id !== assistantId));
     } finally {
       setIsSending(false);
     }
   }
 
-  const showStarterChips = messages.length <= 1 && messages.every((m) => m.role === "assistant");
+  const showStarterChips = messages.length === 0;
 
   return (
     <div className={styles.window}>

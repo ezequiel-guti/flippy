@@ -1,31 +1,123 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import ChatSidebar from "@/components/ChatSidebar";
 import ChatWindow from "@/components/ChatWindow";
-import { mockChats, mockMessages } from "@/lib/mockChatData";
-import type { ChatMessageData } from "@/types/chat";
+import { apiGet, apiPost, ApiError } from "@/services/api";
+import type { ChatMessageData, ChatSummary } from "@/types/chat";
 import styles from "./page.module.css";
 
+interface RawChatSummary {
+  id: string;
+  title: string;
+  updated_at: string;
+}
+
+interface RawMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  image_url: string | null;
+  created_at: string;
+}
+
+interface UserProfile {
+  email: string;
+}
+
+function toChatSummary(raw: RawChatSummary): ChatSummary {
+  return { id: raw.id, title: raw.title, updatedAt: raw.updated_at };
+}
+
+function toChatMessage(raw: RawMessage): ChatMessageData {
+  return {
+    id: raw.id,
+    role: raw.role,
+    content: raw.content,
+    imageUrl: raw.image_url ?? undefined,
+    createdAt: raw.created_at,
+  };
+}
+
 export default function ChatPage() {
-  const [chats, setChats] = useState(mockChats);
-  const [activeChatId, setActiveChatId] = useState(mockChats[0]?.id);
-  const [messagesByChat] = useState<Record<string, ChatMessageData[]>>({
-    [mockChats[0]?.id]: mockMessages,
-  });
+  const router = useRouter();
+  const [chats, setChats] = useState<ChatSummary[]>([]);
+  const [activeChatId, setActiveChatId] = useState<string | undefined>();
+  const [messages, setMessages] = useState<ChatMessageData[]>([]);
+  const [userName, setUserName] = useState("Vos");
+  const [isLoading, setIsLoading] = useState(true);
   const [showHistoryOnMobile, setShowHistoryOnMobile] = useState(false);
 
-  function handleNewChat() {
-    const id = crypto.randomUUID();
-    const newChat = { id, title: "Nuevo chat", updatedAt: new Date().toISOString() };
-    setChats((prev) => [newChat, ...prev]);
-    setActiveChatId(id);
-    setShowHistoryOnMobile(false);
+  function redirectOnAuthError(err: unknown): boolean {
+    if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
+      router.push("/login");
+      return true;
+    }
+    return false;
+  }
+
+  useEffect(() => {
+    async function init() {
+      try {
+        const profile = await apiGet<UserProfile>("/api/v1/auth/me");
+        setUserName(profile.email.split("@")[0]);
+
+        const rawChats = await apiGet<RawChatSummary[]>("/api/v1/chats");
+        let list = rawChats.map(toChatSummary);
+        if (list.length === 0) {
+          const created = await apiPost<RawChatSummary>("/api/v1/chats", {});
+          list = [toChatSummary(created)];
+        }
+        setChats(list);
+        setActiveChatId(list[0].id);
+      } catch (err) {
+        redirectOnAuthError(err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!activeChatId) return;
+    apiGet<RawMessage[]>(`/api/v1/chats/${activeChatId}/messages`)
+      .then((raw) => setMessages(raw.map(toChatMessage)))
+      .catch(redirectOnAuthError);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeChatId]);
+
+  async function refreshChats() {
+    try {
+      const rawChats = await apiGet<RawChatSummary[]>("/api/v1/chats");
+      setChats(rawChats.map(toChatSummary));
+    } catch (err) {
+      redirectOnAuthError(err);
+    }
+  }
+
+  async function handleNewChat() {
+    try {
+      const created = await apiPost<RawChatSummary>("/api/v1/chats", {});
+      const summary = toChatSummary(created);
+      setChats((prev) => [summary, ...prev]);
+      setActiveChatId(summary.id);
+      setMessages([]);
+      setShowHistoryOnMobile(false);
+    } catch (err) {
+      redirectOnAuthError(err);
+    }
   }
 
   function handleSelectChat(chatId: string) {
     setActiveChatId(chatId);
     setShowHistoryOnMobile(false);
+  }
+
+  if (isLoading) {
+    return <main className={styles.loadingPage}>Cargando…</main>;
   }
 
   return (
@@ -34,17 +126,22 @@ export default function ChatPage() {
         <ChatSidebar
           chats={chats}
           activeChatId={activeChatId}
-          userName="Virgilio"
+          userName={userName}
           onSelectChat={handleSelectChat}
           onNewChat={handleNewChat}
           onClose={showHistoryOnMobile ? () => setShowHistoryOnMobile(false) : undefined}
         />
       </aside>
       <main className={styles.mainPane}>
-        <ChatWindow
-          initialMessages={activeChatId ? messagesByChat[activeChatId] ?? [] : []}
-          onOpenHistory={() => setShowHistoryOnMobile(true)}
-        />
+        {activeChatId && (
+          <ChatWindow
+            key={activeChatId}
+            chatId={activeChatId}
+            initialMessages={messages}
+            onOpenHistory={() => setShowHistoryOnMobile(true)}
+            onMessageSent={refreshChats}
+          />
+        )}
       </main>
     </div>
   );
