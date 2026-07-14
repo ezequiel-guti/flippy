@@ -29,6 +29,10 @@ export default function AdminSidebar({ activeHref }: AdminSidebarProps) {
               className={`${styles.navItem} ${item.href === activeHref ? styles.navItemActive : ""}`}
               aria-current={item.href === activeHref ? "page" : undefined}
             >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                <path d="M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z" />
+                <path d="M14 3v5h5" />
+              </svg>
               {item.label}
             </Link>
           </li>

@@ -30,23 +30,28 @@
 }
 
 .navItem {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
   font-family: var(--font-secondary);
-  font-size: 13.5px;
-  color: var(--color-text-primary);
+  font-size: 14px;
+  color: var(--color-primary);
+  background: var(--color-white);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--border-radius-md);
+  padding: 11px;
   text-decoration: none;
-  border-radius: var(--border-radius-sm);
-  padding: 10px 11px;
 }
 
 .navItem:hover {
-  background: rgba(43, 43, 45, 0.05);
+  background: var(--color-primary-tint);
 }
 
 .navItemActive {
-  background: var(--color-primary-tint);
-  color: var(--color-primary);
-  font-weight: var(--font-weight-bold);
+  background: var(--color-primary);
+  color: var(--color-white);
 }
 
 .footer {
