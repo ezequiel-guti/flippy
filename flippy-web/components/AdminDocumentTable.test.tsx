@@ -26,4 +26,30 @@ describe("AdminDocumentTable", () => {
     fireEvent.click(screen.getAllByText("Eliminar")[0]);
     expect(onDelete).toHaveBeenCalledWith("1");
   });
+
+  it("filters documents by name", () => {
+    render(<AdminDocumentTable documents={documents} onDelete={jest.fn()} />);
+    fireEvent.change(screen.getByLabelText(/buscar documentos por nombre/i), { target: { value: "notas" } });
+    expect(screen.getByText("notas.txt")).toBeInTheDocument();
+    expect(screen.queryByText("manual.pdf")).not.toBeInTheDocument();
+  });
+
+  it("paginates results according to the selected page size", () => {
+    const manyDocuments: DocumentSummary[] = Array.from({ length: 12 }, (_, i) => ({
+      id: String(i),
+      name: `doc-${i}.txt`,
+      type: "txt",
+      status: "ready",
+      chunk_count: 1,
+      created_at: "2026-07-13T00:00:00Z",
+    }));
+    render(<AdminDocumentTable documents={manyDocuments} onDelete={jest.fn()} />);
+
+    expect(screen.getByText("doc-0.txt")).toBeInTheDocument();
+    expect(screen.queryByText("doc-10.txt")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("2"));
+    expect(screen.getByText("doc-10.txt")).toBeInTheDocument();
+    expect(screen.queryByText("doc-0.txt")).not.toBeInTheDocument();
+  });
 });

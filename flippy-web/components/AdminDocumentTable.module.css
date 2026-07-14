@@ -1,3 +1,125 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.toolbarLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-secondary);
+  font-size: var(--font-size-label);
+  color: var(--color-text-secondary);
+}
+
+.count {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-bold);
+}
+
+.pageSizeOptions {
+  display: flex;
+  gap: 4px;
+}
+
+.pageSizeButton {
+  font-family: var(--font-secondary);
+  font-size: var(--font-size-label);
+  color: var(--color-text-secondary);
+  background: var(--color-white);
+  border: 1px solid var(--color-line);
+  border-radius: var(--border-radius-sm);
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.pageSizeButton:hover {
+  background: rgba(43, 43, 45, 0.05);
+}
+
+.pageSizeButtonActive {
+  background: var(--color-primary);
+  color: var(--color-white);
+  border-color: var(--color-primary);
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: var(--color-white);
+  border: 1px solid var(--color-line);
+  border-radius: var(--border-radius-sm);
+  padding: 8px 12px;
+  color: var(--color-text-secondary);
+  min-width: 220px;
+}
+
+.search input {
+  border: none;
+  background: transparent;
+  font-family: var(--font-secondary);
+  font-size: 13px;
+  color: var(--color-text-primary);
+  flex: 1;
+  outline: none;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-family: var(--font-secondary);
+  font-size: var(--font-size-label);
+  color: var(--color-text-secondary);
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pageButton,
+.pageNavButton {
+  font-family: var(--font-secondary);
+  font-size: var(--font-size-label);
+  color: var(--color-text-primary);
+  background: var(--color-white);
+  border: 1px solid var(--color-line);
+  border-radius: var(--border-radius-sm);
+  min-width: 28px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.pageButton:hover,
+.pageNavButton:hover:not(:disabled) {
+  background: rgba(43, 43, 45, 0.05);
+}
+
+.pageButtonActive {
+  background: var(--color-primary);
+  color: var(--color-white);
+  border-color: var(--color-primary);
+}
+
+.pageNavButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;
