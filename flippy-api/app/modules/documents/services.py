@@ -10,13 +10,15 @@ from app.integrations.openai_embeddings import embed_texts
 from .chunking import chunk_text
 from .parsers import extract_text
 
-VECTORIZABLE_TYPES = {"pdf", "docx", "txt"}
+VECTORIZABLE_TYPES = {"pdf", "docx", "txt", "json", "html"}
 ALLOWED_TYPES = VECTORIZABLE_TYPES | {"image"}
 
 CONTENT_TYPES = {
     "pdf": "application/pdf",
     "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     "txt": "text/plain",
+    "json": "application/json",
+    "html": "text/html",
     "image": "application/octet-stream",
 }
 

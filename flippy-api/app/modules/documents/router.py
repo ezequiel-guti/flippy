@@ -9,7 +9,16 @@ from .services import ALLOWED_TYPES, DocumentsService
 
 router = APIRouter(prefix="/admin/documents", tags=["documents"])
 
-EXTENSION_TO_TYPE = {"pdf": "pdf", "docx": "docx", "txt": "txt", "jpg": "image", "jpeg": "image", "png": "image"}
+EXTENSION_TO_TYPE = {
+    "pdf": "pdf",
+    "docx": "docx",
+    "txt": "txt",
+    "json": "json",
+    "html": "html",
+    "jpg": "image",
+    "jpeg": "image",
+    "png": "image",
+}
 MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024  # 20 MB
 
 

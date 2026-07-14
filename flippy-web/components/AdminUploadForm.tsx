@@ -8,7 +8,7 @@ interface AdminUploadFormProps {
   existingNames?: string[];
 }
 
-const ACCEPTED_EXTENSIONS = ".pdf,.docx,.txt,.jpg,.jpeg,.png";
+const ACCEPTED_EXTENSIONS = ".pdf,.docx,.txt,.json,.html,.jpg,.jpeg,.png";
 
 export default function AdminUploadForm({ onUpload, existingNames = [] }: AdminUploadFormProps) {
   const [isUploading, setIsUploading] = useState(false);
