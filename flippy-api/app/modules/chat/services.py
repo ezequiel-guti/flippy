@@ -1,11 +1,17 @@
 import json
+import uuid
 
 from app.core.db import get_db_connection
+from app.integrations import supabase_storage
 
 TOP_K_CHUNKS = 5
 HISTORY_LIMIT = 10
 TITLE_MAX_LENGTH = 60
 DEFAULT_TITLE = "Nuevo chat"
+DEFAULT_IMAGE_CAPTION = "Imagen adjunta"
+
+CHAT_IMAGES_BUCKET = "chat-attachments"
+SIGNED_URL_EXPIRES_IN = 3600
 
 SYSTEM_PROMPT = (
     "Sos Flippy, el asistente de la comunidad educativa inmobiliaria. "
@@ -127,11 +133,31 @@ class ChatService:
                 "id": str(r[0]),
                 "role": r[1],
                 "content": r[2],
-                "image_url": r[3],
+                "image_url": ChatService._resolve_image_url(r[3]),
                 "created_at": r[4].isoformat(),
             }
             for r in rows
         ]
+
+    @staticmethod
+    def _resolve_image_url(storage_path: str | None) -> str | None:
+        """messages.image_url stores a private Storage path — resolve it to a
+        short-lived signed URL on read so history stays viewable indefinitely
+        (Storage bucket is private, unlike a public CDN link)."""
+        if not storage_path:
+            return None
+        return supabase_storage.create_signed_url(
+            storage_path, bucket=CHAT_IMAGES_BUCKET, expires_in=SIGNED_URL_EXPIRES_IN
+        )
+
+    @staticmethod
+    def upload_chat_image(chat_id: str, filename: str, content: bytes, content_type: str) -> str:
+        """Uploads a user-attached image to the private chat-attachments bucket
+        and returns the storage path (stored in messages.image_url)."""
+        storage_path = f"{chat_id}/{uuid.uuid4()}-{filename}"
+        supabase_storage.ensure_bucket_exists(bucket=CHAT_IMAGES_BUCKET)
+        supabase_storage.upload_file(storage_path, content, content_type, bucket=CHAT_IMAGES_BUCKET)
+        return storage_path
 
     @staticmethod
     def save_message(chat_id: str, role: str, content: str, image_url: str | None = None) -> dict:
@@ -214,3 +240,41 @@ def build_contents(history: list[dict], context_chunks: list[str], user_message:
     final_turn = f"Contexto recuperado del corpus:\n{context_block}\n\nConsulta del usuario: {user_message}"
     contents.append({"role": "user", "parts": [{"text": final_turn}]})
     return contents
+
+
+def build_vision_messages(
+    history: list[dict],
+    context_chunks: list[str],
+    user_text: str,
+    image_base64: str,
+    image_media_type: str,
+) -> list[dict]:
+    """Builds the Anthropic `messages` array for F-04: prior text turns + a final user turn
+    carrying the attached image plus whatever RAG context matched the caption text."""
+    messages = [
+        {"role": "user" if m["role"] == "user" else "assistant", "content": m["content"]}
+        for m in history[-HISTORY_LIMIT:]
+    ]
+
+    if context_chunks:
+        context_block = "\n\n---\n\n".join(context_chunks)
+    else:
+        context_block = "(sin resultados relevantes en el corpus)"
+
+    final_text = (
+        f"Contexto recuperado del corpus:\n{context_block}\n\n"
+        f"Consulta del usuario sobre la imagen adjunta: {user_text}"
+    )
+    messages.append(
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "image",
+                    "source": {"type": "base64", "media_type": image_media_type, "data": image_base64},
+                },
+                {"type": "text", "text": final_text},
+            ],
+        }
+    )
+    return messages

@@ -104,3 +104,27 @@ export async function apiStream(path: string, body: unknown): Promise<ReadableSt
 
   return response.body;
 }
+
+export async function apiStreamUpload(
+  path: string,
+  file: File,
+  fields: Record<string, string> = {}
+): Promise<ReadableStream<Uint8Array>> {
+  const formData = new FormData();
+  formData.append("file", file);
+  for (const [key, value] of Object.entries(fields)) {
+    formData.append(key, value);
+  }
+
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: "POST",
+    headers: { ...authHeaders() },
+    body: formData,
+  });
+
+  if (!response.ok || !response.body) {
+    throw new ApiError(response.status, `STREAM ${path} failed with status ${response.status}`);
+  }
+
+  return response.body;
+}

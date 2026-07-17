@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { ChatMessageData } from "@/types/chat";
-import { apiStream } from "@/services/api";
+import { apiStream, apiStreamUpload } from "@/services/api";
 import ChatMessage from "./ChatMessage";
 import ChatChips from "./ChatChips";
 import ChatInput from "./ChatInput";
@@ -32,6 +32,37 @@ export default function ChatWindow({ chatId, initialMessages, onOpenHistory, onM
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  async function consumeStream(stream: ReadableStream<Uint8Array>, assistantId: string) {
+    const reader = stream.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let accumulated = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const events = buffer.split("\n\n");
+      buffer = events.pop() ?? "";
+
+      for (const event of events) {
+        const line = event.trim();
+        if (!line.startsWith("data: ")) continue;
+        const data = line.slice("data: ".length);
+        if (data === "[DONE]") continue;
+
+        const parsed = JSON.parse(data) as { text?: string; error?: string };
+        if (parsed.error) {
+          setError(parsed.error);
+        } else if (parsed.text) {
+          accumulated += parsed.text;
+          const snapshot = accumulated;
+          setMessages((prev) => prev.map((m) => (m.id === assistantId ? { ...m, content: snapshot } : m)));
+        }
+      }
+    }
+  }
+
   async function sendMessage(text: string, imageFile: File | null) {
     const userMessage: ChatMessageData = {
       id: crypto.randomUUID(),
@@ -43,12 +74,7 @@ export default function ChatWindow({ chatId, initialMessages, onOpenHistory, onM
     setMessages((prev) => [...prev, userMessage]);
     setError(null);
 
-    if (imageFile) {
-      // TODO(F-04): analisis de imagen con Claude 3.5 Sonnet — todavia no implementado
-      setError("El análisis de imágenes todavía no está disponible. Probá tu consulta solo con texto.");
-      return;
-    }
-    if (!text) return;
+    if (!text && !imageFile) return;
 
     setIsSending(true);
     const assistantId = crypto.randomUUID();
@@ -58,38 +84,15 @@ export default function ChatWindow({ chatId, initialMessages, onOpenHistory, onM
     ]);
 
     try {
-      const stream = await apiStream(`/api/v1/chats/${chatId}/messages`, { content: text });
-      const reader = stream.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      let accumulated = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const events = buffer.split("\n\n");
-        buffer = events.pop() ?? "";
-
-        for (const event of events) {
-          const line = event.trim();
-          if (!line.startsWith("data: ")) continue;
-          const data = line.slice("data: ".length);
-          if (data === "[DONE]") continue;
-
-          const parsed = JSON.parse(data) as { text?: string; error?: string };
-          if (parsed.error) {
-            setError(parsed.error);
-          } else if (parsed.text) {
-            accumulated += parsed.text;
-            const snapshot = accumulated;
-            setMessages((prev) => prev.map((m) => (m.id === assistantId ? { ...m, content: snapshot } : m)));
-          }
-        }
-      }
+      const stream = imageFile
+        ? await apiStreamUpload(`/api/v1/chats/${chatId}/messages/image`, imageFile, { content: text })
+        : await apiStream(`/api/v1/chats/${chatId}/messages`, { content: text });
+      await consumeStream(stream, assistantId);
       onMessageSent?.();
     } catch {
-      setError("No pudimos enviar tu mensaje. Intentá de nuevo.");
+      setError(
+        imageFile ? "No pudimos analizar la imagen. Intentá de nuevo." : "No pudimos enviar tu mensaje. Intentá de nuevo."
+      );
       setMessages((prev) => prev.filter((m) => m.id !== assistantId));
     } finally {
       setIsSending(false);
