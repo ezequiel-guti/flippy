@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { ChatSummary } from "@/types/chat";
@@ -33,6 +33,20 @@ export default function ChatSidebar({
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<ChatSummary | null>(null);
+
+  useEffect(() => {
+    if (!openMenuId) return;
+
+    function handleClickOutside(event: MouseEvent) {
+      const target = event.target as Element;
+      if (!target.closest(`[data-menu-id="${openMenuId}"]`)) {
+        setOpenMenuId(null);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [openMenuId]);
 
   function openMenu(e: React.MouseEvent, chatId: string) {
     e.stopPropagation();
@@ -119,7 +133,7 @@ export default function ChatSidebar({
               <div className={styles.sectionLabel}>{group.label}</div>
               <ul className={styles.chatList}>
                 {group.chats.map((chat) => (
-                  <li key={chat.id} className={styles.chatListItem}>
+                  <li key={chat.id} className={styles.chatListItem} data-menu-id={chat.id}>
                     {renamingId === chat.id ? (
                       <input
                         type="text"

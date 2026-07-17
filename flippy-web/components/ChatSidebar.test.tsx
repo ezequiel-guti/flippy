@@ -156,4 +156,22 @@ describe("ChatSidebar", () => {
     fireEvent.keyDown(input, { key: "Enter" });
     expect(onRenameChat).toHaveBeenCalledWith("1", "Nuevo título");
   });
+
+  it("closes the kebab menu when clicking outside of it", () => {
+    render(
+      <ChatSidebar
+        chats={chats}
+        userName="Virgilio"
+        onSelectChat={jest.fn()}
+        onNewChat={jest.fn()}
+        onRenameChat={jest.fn()}
+        onDeleteChat={jest.fn()}
+      />
+    );
+    fireEvent.click(screen.getAllByLabelText("Opciones del chat")[0]);
+    expect(screen.getByText("Renombrar")).toBeInTheDocument();
+
+    fireEvent.mouseDown(document.body);
+    expect(screen.queryByText("Renombrar")).not.toBeInTheDocument();
+  });
 });

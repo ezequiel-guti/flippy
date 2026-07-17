@@ -127,3 +127,13 @@ Alternativas consideradas: soft-delete (columna deleted_at) — descartado, no h
 Comportamiento del chat activo al eliminarlo (definido con el usuario): si la vista actual corresponde al chat eliminado, la pantalla queda en blanco (sin auto-seleccionar otro chat); si el usuario está viendo otro chat, no cambia nada.
 Impacto: flippy-api: model.py (ChatRename), services.py (rename_chat, delete_chat), router.py (rutas PATCH/DELETE), 5 tests pytest nuevos contra Supabase real (rename propio/ajeno, delete propio/ajeno + cascada de mensajes, requiere auth). flippy-web: services/api.ts (apiPatch nuevo), ChatSidebar.tsx + .module.css (menú, input de rename, modal de confirmación), chat/page.tsx (handleRenameChat/handleDeleteChat), 3 tests Jest nuevos. SPEC.md §3 F-03 ampliado con los pasos 3-6 (antes solo mencionaba renombrar sin que existiera). 22/22 tests pytest y 37/37 tests Jest verdes, tsc sin errores.
 ════════════════════════════════════════════════════════
+
+════════════════════════════════════════════════════════
+📋 DECISIÓN — Fix: menú kebab sin listener de clic externo (Incremento 8.1)
+════════════════════════════════════════════════════════
+Fecha: 2026-07-16
+Decisión: Agregar un `useEffect` en ChatSidebar que registra un listener `mousedown` en `document` mientras haya un menú kebab abierto (`openMenuId`), y lo cierra si el clic ocurre fuera del `<li data-menu-id={chat.id}>` correspondiente (`Element.closest`).
+Racional: el usuario reportó que el popup de opciones quedaba abierto al hacer clic en otro lugar. El menú (Incremento 8) solo tenía lógica de cierre al re-tocar el mismo kebab o al elegir Renombrar/Eliminar — nunca se contempló el clic fuera. Se usa `mousedown` (no `click`) para que el cierre ocurra antes de que la acción del elemento clickeado se dispare, evitando estados intermedios inconsistentes.
+Alternativas consideradas: un ref por ítem con `useRef` — descartado por requerir un array/mapa de refs dinámico para una lista variable de chats; el atributo `data-menu-id` + `closest()` logra lo mismo sin esa complejidad.
+Impacto: flippy-web/components/ChatSidebar.tsx (useEffect + atributo data-menu-id en el `<li>`), 1 test Jest nuevo (clic en document.body cierra el menú). 38/38 tests Jest verdes.
+════════════════════════════════════════════════════════
