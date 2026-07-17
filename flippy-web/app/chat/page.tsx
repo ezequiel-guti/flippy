@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import ChatSidebar from "@/components/ChatSidebar";
 import ChatWindow from "@/components/ChatWindow";
-import { apiGet, apiPost, ApiError } from "@/services/api";
+import { apiGet, apiPost, apiPatch, apiDelete, ApiError } from "@/services/api";
 import type { ChatMessageData, ChatSummary } from "@/types/chat";
 import styles from "./page.module.css";
 
@@ -116,6 +116,28 @@ export default function ChatPage() {
     setShowHistoryOnMobile(false);
   }
 
+  async function handleRenameChat(chatId: string, title: string) {
+    try {
+      await apiPatch<RawChatSummary>(`/api/v1/chats/${chatId}`, { title });
+      setChats((prev) => prev.map((chat) => (chat.id === chatId ? { ...chat, title } : chat)));
+    } catch (err) {
+      redirectOnAuthError(err);
+    }
+  }
+
+  async function handleDeleteChat(chatId: string) {
+    try {
+      await apiDelete(`/api/v1/chats/${chatId}`);
+      setChats((prev) => prev.filter((chat) => chat.id !== chatId));
+      if (activeChatId === chatId) {
+        setActiveChatId(undefined);
+        setMessages([]);
+      }
+    } catch (err) {
+      redirectOnAuthError(err);
+    }
+  }
+
   if (isLoading) {
     return <main className={styles.loadingPage}>Cargando…</main>;
   }
@@ -129,6 +151,8 @@ export default function ChatPage() {
           userName={userName}
           onSelectChat={handleSelectChat}
           onNewChat={handleNewChat}
+          onRenameChat={handleRenameChat}
+          onDeleteChat={handleDeleteChat}
           onClose={showHistoryOnMobile ? () => setShowHistoryOnMobile(false) : undefined}
         />
       </aside>

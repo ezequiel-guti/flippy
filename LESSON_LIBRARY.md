@@ -9,3 +9,11 @@
 **Tags:** #stack/supabase #stack/postgres #phase/build #flippy
 
 ---
+
+### L-02 — Elementos de UI "fantasma": estilo interactivo sin handler conectado
+**Category:** Best Practices / Workflow
+**Signal:** Un ícono o botón en la UI tiene estilos hover/active y parece interactivo, pero carga `aria-hidden="true"` o no tiene ningún `onClick` — visualmente indistinguible de un elemento funcional, pero no dispara ninguna acción. Descubierto cuando el usuario reportó "no puedo eliminar el chat": el ícono kebab (⋮) del sidebar existía desde su creación (Incremento 4) con estilos completos, pero nunca tuvo handler ni endpoint de backend — no era una regresión, era una funcionalidad que nunca se construyó.
+**Principle:** Al cerrar cualquier incremento de UI, verificar explícitamente que todo elemento con apariencia interactiva (cursor pointer, hover state, ícono de acción) tenga un handler conectado a un caso de uso real, o eliminarlo del markup. La revisión visual del componente terminado no detecta esto — hay que revisar el JSX/handlers, no solo el resultado renderizado.
+**Tags:** #stack/react #stack/nextjs #phase/qa #phase/build #flippy
+
+---

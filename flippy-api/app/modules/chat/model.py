@@ -7,6 +7,10 @@ class ChatSummary(BaseModel):
     updated_at: str
 
 
+class ChatRename(BaseModel):
+    title: str
+
+
 class MessageCreate(BaseModel):
     content: str
 

@@ -69,6 +69,44 @@ class ChatService:
         return {"id": str(row[0]), "title": row[1], "updated_at": row[2].isoformat()}
 
     @staticmethod
+    def rename_chat(chat_id: str, user_id: str, title: str) -> dict | None:
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    update chats set title = %s
+                    where id = %s and user_id = %s
+                    returning id, title, updated_at
+                    """,
+                    (title, chat_id, user_id),
+                )
+                row = cur.fetchone()
+            conn.commit()
+        finally:
+            conn.close()
+
+        if not row:
+            return None
+        return {"id": str(row[0]), "title": row[1], "updated_at": row[2].isoformat()}
+
+    @staticmethod
+    def delete_chat(chat_id: str, user_id: str) -> bool:
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "delete from chats where id = %s and user_id = %s returning id",
+                    (chat_id, user_id),
+                )
+                row = cur.fetchone()
+            conn.commit()
+        finally:
+            conn.close()
+
+        return row is not None
+
+    @staticmethod
     def list_messages(chat_id: str) -> list[dict]:
         conn = get_db_connection()
         try:

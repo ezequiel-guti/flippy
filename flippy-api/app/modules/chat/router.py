@@ -7,7 +7,7 @@ from app.core.security import TokenData, get_current_user
 from app.integrations import gemini
 from app.integrations.openai_embeddings import embed_text
 
-from .model import ChatSummary, MessageCreate, MessageResponse
+from .model import ChatRename, ChatSummary, MessageCreate, MessageResponse
 from .services import SYSTEM_PROMPT, ChatService, build_contents
 
 router = APIRouter(prefix="/chats", tags=["chat"])
@@ -21,6 +21,21 @@ def list_chats(current_user: TokenData = Depends(get_current_user)):
 @router.post("", response_model=ChatSummary)
 def create_chat(current_user: TokenData = Depends(get_current_user)):
     return ChatService.create_chat(current_user.user_id)
+
+
+@router.patch("/{chat_id}", response_model=ChatSummary)
+def rename_chat(chat_id: str, body: ChatRename, current_user: TokenData = Depends(get_current_user)):
+    chat = ChatService.rename_chat(chat_id, current_user.user_id, body.title)
+    if not chat:
+        raise HTTPException(status_code=404, detail="Chat no encontrado")
+    return chat
+
+
+@router.delete("/{chat_id}", status_code=204)
+def delete_chat(chat_id: str, current_user: TokenData = Depends(get_current_user)):
+    deleted = ChatService.delete_chat(chat_id, current_user.user_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Chat no encontrado")
 
 
 @router.get("/{chat_id}/messages", response_model=list[MessageResponse])

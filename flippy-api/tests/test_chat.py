@@ -88,3 +88,76 @@ def test_send_message_streams_and_persists(registered_user, monkeypatch):
 
     updated_chat = client.get("/api/v1/chats", headers=headers).json()[0]
     assert updated_chat["title"] == "Que es el ROI?"
+
+
+def test_rename_chat(registered_user):
+    headers = {"Authorization": f"Bearer {registered_user}"}
+    chat = client.post("/api/v1/chats", headers=headers).json()
+
+    response = client.patch(
+        f"/api/v1/chats/{chat['id']}", headers=headers, json={"title": "Mi chat renombrado"}
+    )
+    assert response.status_code == 200
+    assert response.json()["title"] == "Mi chat renombrado"
+
+    listed = client.get("/api/v1/chats", headers=headers).json()
+    assert listed[0]["title"] == "Mi chat renombrado"
+
+
+def test_rename_foreign_chat_returns_404(registered_user):
+    headers_a = {"Authorization": f"Bearer {registered_user}"}
+    chat = client.post("/api/v1/chats", headers=headers_a).json()
+
+    other_email = f"sdad-chat-other-{uuid.uuid4().hex[:12]}@example.com"
+    other_password = "TestPassword123!"
+    other_result = supabase_auth.sign_up(other_email, other_password)
+    headers_b = {"Authorization": f"Bearer {other_result['access_token']}"}
+
+    try:
+        response = client.patch(
+            f"/api/v1/chats/{chat['id']}", headers=headers_b, json={"title": "Hackeado"}
+        )
+        assert response.status_code == 404
+    finally:
+        supabase_auth.delete_user(other_result["user"]["id"])
+
+
+def test_delete_chat_removes_it_and_its_messages(registered_user, monkeypatch):
+    def fake_stream_chat(system_prompt, contents):
+        yield "Hola"
+
+    monkeypatch.setattr(gemini, "stream_chat", fake_stream_chat)
+
+    headers = {"Authorization": f"Bearer {registered_user}"}
+    chat = client.post("/api/v1/chats", headers=headers).json()
+    client.post(f"/api/v1/chats/{chat['id']}/messages", headers=headers, json={"content": "Hola"})
+
+    response = client.delete(f"/api/v1/chats/{chat['id']}", headers=headers)
+    assert response.status_code == 204
+
+    ids = [c["id"] for c in client.get("/api/v1/chats", headers=headers).json()]
+    assert chat["id"] not in ids
+
+    messages_response = client.get(f"/api/v1/chats/{chat['id']}/messages", headers=headers)
+    assert messages_response.status_code == 404
+
+
+def test_delete_foreign_chat_returns_404(registered_user):
+    headers_a = {"Authorization": f"Bearer {registered_user}"}
+    chat = client.post("/api/v1/chats", headers=headers_a).json()
+
+    other_email = f"sdad-chat-other-{uuid.uuid4().hex[:12]}@example.com"
+    other_password = "TestPassword123!"
+    other_result = supabase_auth.sign_up(other_email, other_password)
+    headers_b = {"Authorization": f"Bearer {other_result['access_token']}"}
+
+    try:
+        response = client.delete(f"/api/v1/chats/{chat['id']}", headers=headers_b)
+        assert response.status_code == 404
+    finally:
+        supabase_auth.delete_user(other_result["user"]["id"])
+
+
+def test_delete_chat_requires_auth():
+    response = client.delete("/api/v1/chats/does-not-matter")
+    assert response.status_code in (401, 403)

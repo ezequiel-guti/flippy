@@ -13,6 +13,8 @@ interface ChatSidebarProps {
   userName: string;
   onSelectChat: (chatId: string) => void;
   onNewChat: () => void;
+  onRenameChat: (chatId: string, title: string) => void;
+  onDeleteChat: (chatId: string) => void;
   onClose?: () => void;
 }
 
@@ -22,9 +24,48 @@ export default function ChatSidebar({
   userName,
   onSelectChat,
   onNewChat,
+  onRenameChat,
+  onDeleteChat,
   onClose,
 }: ChatSidebarProps) {
   const [query, setQuery] = useState("");
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<ChatSummary | null>(null);
+
+  function openMenu(e: React.MouseEvent, chatId: string) {
+    e.stopPropagation();
+    setOpenMenuId((prev) => (prev === chatId ? null : chatId));
+  }
+
+  function startRename(e: React.MouseEvent, chat: ChatSummary) {
+    e.stopPropagation();
+    setOpenMenuId(null);
+    setRenamingId(chat.id);
+    setRenameValue(chat.title);
+  }
+
+  function commitRename(chatId: string) {
+    const trimmed = renameValue.trim();
+    if (trimmed && trimmed !== chats.find((c) => c.id === chatId)?.title) {
+      onRenameChat(chatId, trimmed);
+    }
+    setRenamingId(null);
+  }
+
+  function askDelete(e: React.MouseEvent, chat: ChatSummary) {
+    e.stopPropagation();
+    setOpenMenuId(null);
+    setDeleteTarget(chat);
+  }
+
+  function confirmDelete() {
+    if (deleteTarget) {
+      onDeleteChat(deleteTarget.id);
+      setDeleteTarget(null);
+    }
+  }
 
   const filteredChats = useMemo(
     () => chats.filter((chat) => chat.title.toLowerCase().includes(query.trim().toLowerCase())),
@@ -78,22 +119,60 @@ export default function ChatSidebar({
               <div className={styles.sectionLabel}>{group.label}</div>
               <ul className={styles.chatList}>
                 {group.chats.map((chat) => (
-                  <li key={chat.id}>
-                    <button
-                      type="button"
-                      className={`${styles.chatItem} ${chat.id === activeChatId ? styles.chatItemActive : ""}`}
-                      onClick={() => onSelectChat(chat.id)}
-                      aria-current={chat.id === activeChatId ? "true" : undefined}
-                    >
-                      <span className={styles.chatTitle}>{chat.title}</span>
-                      <span className={styles.kebab} aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15">
-                          <circle cx="12" cy="5" r="1.5" />
-                          <circle cx="12" cy="12" r="1.5" />
-                          <circle cx="12" cy="19" r="1.5" />
-                        </svg>
-                      </span>
-                    </button>
+                  <li key={chat.id} className={styles.chatListItem}>
+                    {renamingId === chat.id ? (
+                      <input
+                        type="text"
+                        className={styles.renameInput}
+                        value={renameValue}
+                        autoFocus
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        onBlur={() => commitRename(chat.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") commitRename(chat.id);
+                          if (e.key === "Escape") setRenamingId(null);
+                        }}
+                        aria-label="Renombrar chat"
+                      />
+                    ) : (
+                      <button
+                        type="button"
+                        className={`${styles.chatItem} ${chat.id === activeChatId ? styles.chatItemActive : ""}`}
+                        onClick={() => onSelectChat(chat.id)}
+                        aria-current={chat.id === activeChatId ? "true" : undefined}
+                      >
+                        <span className={styles.chatTitle}>{chat.title}</span>
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          className={styles.kebab}
+                          aria-label="Opciones del chat"
+                          onClick={(e) => openMenu(e, chat.id)}
+                        >
+                          <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15">
+                            <circle cx="12" cy="5" r="1.5" />
+                            <circle cx="12" cy="12" r="1.5" />
+                            <circle cx="12" cy="19" r="1.5" />
+                          </svg>
+                        </span>
+                      </button>
+                    )}
+
+                    {openMenuId === chat.id && (
+                      <div className={styles.chatMenu} role="menu">
+                        <button type="button" role="menuitem" onClick={(e) => startRename(e, chat)}>
+                          Renombrar
+                        </button>
+                        <button
+                          type="button"
+                          role="menuitem"
+                          className={styles.chatMenuDanger}
+                          onClick={(e) => askDelete(e, chat)}
+                        >
+                          Eliminar
+                        </button>
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -115,6 +194,28 @@ export default function ChatSidebar({
           </svg>
         </Link>
       </div>
+
+      {deleteTarget && (
+        <div className={styles.modalOverlay} role="presentation" onClick={() => setDeleteTarget(null)}>
+          <div
+            className={styles.modal}
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="delete-chat-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p id="delete-chat-title">¿Eliminar este chat? Esta acción no se puede deshacer.</p>
+            <div className={styles.modalActions}>
+              <button type="button" className={styles.modalCancel} onClick={() => setDeleteTarget(null)}>
+                Cancelar
+              </button>
+              <button type="button" className={styles.modalConfirm} onClick={confirmDelete}>
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }
