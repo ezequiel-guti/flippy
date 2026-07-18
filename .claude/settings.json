@@ -99,7 +99,8 @@
       "Bash(./venv/Scripts/python.exe -m pytest tests/test_chat.py -v)",
       "Bash(powershell -Command \"Get-Content -Path 'c:\\\\SharedVirtualBox\\\\Projects\\\\EDG\\\\Flippy\\\\src\\\\DECISIONS.md' -Tail 5\")",
       "Bash(./venv/Scripts/python.exe -c \"from app.core.config import settings; print\\('anthropic_key_len', len\\(settings.anthropic_api_key\\)\\); print\\('has_key', bool\\(settings.anthropic_api_key\\)\\)\")",
-      "Bash(./venv/Scripts/python.exe -m pytest tests/test_chat.py -v -k image)"
+      "Bash(./venv/Scripts/python.exe -m pytest tests/test_chat.py -v -k image)",
+      "WebSearch"
     ],
     "additionalDirectories": [
       "\\tmp"

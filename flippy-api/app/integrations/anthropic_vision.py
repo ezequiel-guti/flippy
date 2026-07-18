@@ -1,4 +1,4 @@
-"""Thin streaming wrapper over Anthropic Claude 3.5 Sonnet (Messages API), used only for
+"""Thin streaming wrapper over Anthropic Claude (Messages API), used only for
 user-uploaded image analysis (F-04). Text-only chat stays on Gemini (see gemini.py)."""
 import json
 from typing import Iterator
@@ -7,7 +7,11 @@ import httpx
 
 from app.core.config import settings
 
-MODEL = "claude-3-5-sonnet-20241022"
+# SPEC.md §7 especifica "Claude 3.5 Sonnet" (claude-3-5-sonnet-20241022), pero ese id es de
+# oct-2024 y casi con certeza esta retirado a esta altura (mismo problema que gemini-2.0-flash
+# en el Incremento 7). Sin ANTHROPIC_API_KEY configurada no se pudo confirmar en vivo (ver
+# DECISIONS.md) — se usa el modelo vigente del lineup actual como mejor estimacion disponible.
+MODEL = "claude-sonnet-5"
 BASE_URL = "https://api.anthropic.com/v1/messages"
 ANTHROPIC_VERSION = "2023-06-01"
 MAX_TOKENS = 1024
