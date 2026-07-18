@@ -9,7 +9,14 @@ from app.integrations import anthropic_vision, gemini
 from app.integrations.openai_embeddings import embed_text
 
 from .model import ChatRename, ChatSummary, MessageCreate, MessageResponse
-from .services import DEFAULT_IMAGE_CAPTION, SYSTEM_PROMPT, ChatService, build_contents, build_vision_messages
+from .services import (
+    DEFAULT_IMAGE_CAPTION,
+    SYSTEM_PROMPT,
+    VISION_SYSTEM_PROMPT,
+    ChatService,
+    build_contents,
+    build_vision_messages,
+)
 
 router = APIRouter(prefix="/chats", tags=["chat"])
 
@@ -115,7 +122,7 @@ async def send_image_message(
     def event_stream():
         full_text: list[str] = []
         try:
-            for piece in anthropic_vision.stream_vision(SYSTEM_PROMPT, messages):
+            for piece in anthropic_vision.stream_vision(VISION_SYSTEM_PROMPT, messages):
                 full_text.append(piece)
                 yield f"data: {json.dumps({'text': piece})}\n\n"
         except anthropic_vision.AnthropicError:

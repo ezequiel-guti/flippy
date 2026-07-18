@@ -20,6 +20,17 @@ SYSTEM_PROMPT = (
     "Si no encontras la respuesta en el contexto, decilo claramente y no inventes informacion."
 )
 
+# Prompt separado de SYSTEM_PROMPT (RAG de texto): ahi "respondé UNICAMENTE basandote en el
+# contexto" hace que Claude se niegue a describir la imagen cuando no hay chunks relacionados,
+# justo lo opuesto a F-04 (analizar la imagen y opcionalmente cruzarla con el corpus).
+VISION_SYSTEM_PROMPT = (
+    "Sos Flippy, el asistente de la comunidad educativa inmobiliaria. "
+    "Analizá la imagen adjunta y respondé la consulta del usuario sobre ella. "
+    "Si se te provee contexto del corpus relevante a la imagen, integralo en tu respuesta. "
+    "Si no hay contexto relevante, analizá la imagen igual usando tu propio criterio. "
+    "No menciones de donde proviene la informacion ni cites documentos o fuentes."
+)
+
 
 class ChatService:
     @staticmethod
