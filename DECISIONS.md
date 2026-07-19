@@ -172,3 +172,23 @@ Alternativas consideradas: ajustar el SYSTEM_PROMPT único para cubrir ambos cas
 Verificación realizada: (1) llamada directa a stream_vision con imagen real 64×64 (patrón tablero de ajedrez) — confirma modelo, formato SSE y schema de bloque de imagen correctos; (2) endpoint completo sin mocks, con y sin caption de texto — en ambos casos Claude describe la imagen correctamente tras el fix; (3) suite completa de pytest (27/27) sigue en verde tras el cambio de prompt.
 Impacto: flippy-api/app/modules/chat/services.py (VISION_SYSTEM_PROMPT nuevo), chat/router.py (usa VISION_SYSTEM_PROMPT en vez de SYSTEM_PROMPT para el endpoint de imagen). SPEC.md §7 y §13 actualizados con el resultado de la verificación real.
 ════════════════════════════════════════════════════════
+
+════════════════════════════════════════════════════════
+📋 DECISIÓN — Íconos PWA generados con Pillow desde el logo existente, fondo de marca (Incremento 10)
+════════════════════════════════════════════════════════
+Fecha: 2026-07-19
+Decisión: Generar icon-192.png, icon-512.png y apple-touch-icon.png con un script Pillow ad-hoc a partir de public/icons/logo-shield.png (207×245, no cuadrado), centrado sobre un canvas cuadrado con el color de fondo de marca #F4F1EC y ~70-72% de escala (deja zona segura para íconos maskable). manifest.json actualizado con purpose: "any maskable" en ambas entradas.
+Racional: manifest.json ya declaraba estos dos archivos desde el Incremento 1, pero nunca se generaron — la PWA técnicamente no era instalable con ícono propio (fallback a ícono genérico del navegador). No había un asset de icono cuadrado en docs/ ni en el prototipo HTML del cliente; logo-shield.png (extraído del prototipo en el Incremento 4) ya es un mark autocontenido (fondo vino + marca blanca), así que generar las variantes cuadradas desde ahí es la opción más fiel a la marca aprobada, sin inventar un diseño nuevo.
+Alternativas consideradas: pedir al cliente assets de ícono dedicados antes de continuar (descartado por ahora — el gap bloqueaba la instalabilidad de la PWA, un criterio de aceptación de Hito 1; generar una versión razonable desde el asset ya aprobado es preferible a dejarlo roto mientras se espera); fondo transparente en vez de #F4F1EC (descartado — un ícono de home screen con fondo transparente se ve mal sobre fondos de sistema arbitrarios, mejor un fondo sólido de marca).
+Impacto: flippy-web/public/icons/{icon-192,icon-512,apple-touch-icon}.png (nuevos), manifest.json (purpose maskable). Si el cliente entrega un ícono oficial más adelante, reemplazar estos archivos sin tocar el resto del pipeline.
+════════════════════════════════════════════════════════
+
+════════════════════════════════════════════════════════
+📋 DECISIÓN — Banner de onboarding iOS global en el root layout (Incremento 10)
+════════════════════════════════════════════════════════
+Fecha: 2026-07-19
+Decisión: Nuevo componente IOSInstallBanner.tsx, montado en app/layout.tsx (aplica a toda la app, no solo /chat). Detecta iOS Safari no instalado combinando userAgent (iPhone/iPad/iPod, más el caso iPadOS 13+ que se reporta como "Macintosh" con maxTouchPoints > 1) con navigator.standalone / matchMedia('(display-mode: standalone)'). Dismisseable, con persistencia en localStorage (no vuelve a aparecer tras cerrarlo).
+Racional: F-08 punto 1 de SPEC.md ya especificaba este banner ("Safari → Compartir → Agregar a pantalla de inicio") desde el documento original, pero nunca se había construido — gap real detectado en la auditoría de Hito 1, no una desviación de alcance.
+Alternativas consideradas: mostrarlo solo dentro de /chat (descartado — /login es probablemente la primera pantalla que ve un usuario nuevo en iPhone, más relevante mostrarlo ahí también); usar una librería de detección de PWA-installability (descartado — la detección necesaria es una condición simple, no justifica una dependencia nueva).
+Impacto: flippy-web/components/IOSInstallBanner.tsx + .module.css (nuevos), app/layout.tsx (montado + metadata.icons.apple + metadata.appleWebApp + viewport.themeColor vía Next.js Metadata API). 4 tests Jest nuevos (43/43 total) verdes; verificado en el HTML de next build que los meta tags apple-mobile-web-app-capable/apple-touch-icon/theme-color están presentes.
+════════════════════════════════════════════════════════

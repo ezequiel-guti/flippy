@@ -104,7 +104,9 @@
       "Bash(./venv/Scripts/python.exe -c \"from app.core.config import settings; print\\('has_key', bool\\(settings.anthropic_api_key\\)\\); print\\('key_len', len\\(settings.anthropic_api_key\\)\\)\")",
       "Bash(./venv/Scripts/python.exe \"C:\\\\Users\\\\Ezequiel\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--SharedVirtualBox-Projects-EDG-Flippy-src\\\\63e4c1bb-9dcb-468c-b20a-378a41edd709\\\\scratchpad\\\\verify_claude_vision.py\")",
       "Bash(./venv/Scripts/python.exe \"C:\\\\Users\\\\Ezequiel\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--SharedVirtualBox-Projects-EDG-Flippy-src\\\\63e4c1bb-9dcb-468c-b20a-378a41edd709\\\\scratchpad\\\\verify_claude_vision_raw.py\")",
-      "Bash(./venv/Scripts/python.exe \"C:\\\\Users\\\\Ezequiel\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--SharedVirtualBox-Projects-EDG-Flippy-src\\\\63e4c1bb-9dcb-468c-b20a-378a41edd709\\\\scratchpad\\\\verify_e2e_endpoint.py\")"
+      "Bash(./venv/Scripts/python.exe \"C:\\\\Users\\\\Ezequiel\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--SharedVirtualBox-Projects-EDG-Flippy-src\\\\63e4c1bb-9dcb-468c-b20a-378a41edd709\\\\scratchpad\\\\verify_e2e_endpoint.py\")",
+      "Bash(./../flippy-api/venv/Scripts/python.exe -c ' *)",
+      "Bash(./venv/Scripts/python.exe -m pip show pillow)"
     ],
     "additionalDirectories": [
       "\\tmp"

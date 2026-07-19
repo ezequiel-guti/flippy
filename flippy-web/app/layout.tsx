@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Lato } from "next/font/google";
+import IOSInstallBanner from "@/components/IOSInstallBanner";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -17,6 +18,18 @@ export const metadata: Metadata = {
   title: "Flippy",
   description: "Asistente conversacional de la comunidad educativa inmobiliaria",
   manifest: "/manifest.json",
+  icons: {
+    apple: "/icons/apple-touch-icon.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Flippy",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#8B2E3B",
 };
 
 export default function RootLayout({
@@ -28,6 +41,7 @@ export default function RootLayout({
     <html lang="es" className={`${cormorant.variable} ${lato.variable}`}>
       <body>
         {children}
+        <IOSInstallBanner />
         <script
           dangerouslySetInnerHTML={{
             __html: `
