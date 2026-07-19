@@ -17,3 +17,11 @@
 **Tags:** #stack/react #stack/nextjs #phase/qa #phase/build #flippy
 
 ---
+
+### L-03 — Mocks de LLM esconden bugs de contenido de prompt
+**Category:** LLM Design / Data & Debugging
+**Signal:** Una feature de LLM pasa toda la suite de tests (con la llamada al modelo mockeada vía `monkeypatch`) pero nunca se ejercitó con una llamada real end-to-end antes de darla por cerrada — especialmente cuando reutiliza infraestructura de otra feature (mismo `SYSTEM_PROMPT`, mismo cliente HTTP). Descubierto en F-04 (análisis de imagen): el endpoint reutilizaba el `SYSTEM_PROMPT` del chat de texto RAG ("respondé ÚNICAMENTE basándote en el contexto provisto"), y Claude se negaba a describir imágenes sin contexto de corpus relacionado — comportamiento opuesto al requerido. Los tests mockeados nunca lo detectaron porque no ejercitan el contenido real del prompt contra el modelo.
+**Principle:** Cuando una feature de LLM reutiliza infraestructura (prompt, cliente, wrapper) de otra ya existente, correr al menos una llamada real end-to-end contra el modelo antes de cerrar el incremento — los mocks validan el flujo de código (requests, parsing, persistencia) pero no pueden detectar que el contenido de un prompt es incompatible con el nuevo caso de uso. Si no hay credenciales disponibles todavía, dejarlo marcado explícitamente como "pendiente de verificación E2E" en vez de darlo por cerrado.
+**Tags:** #stack/anthropic #stack/llm #phase/qa #phase/build #flippy
+
+---
