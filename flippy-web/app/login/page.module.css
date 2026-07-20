@@ -85,3 +85,23 @@
   font-size: var(--font-size-label);
   color: var(--color-error);
 }
+
+.toggleMode {
+  font-family: var(--font-secondary);
+  font-size: var(--font-size-label);
+  color: var(--color-primary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  text-align: center;
+}
+
+.toggleMode:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.toggleMode:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
