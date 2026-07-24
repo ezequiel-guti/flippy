@@ -43,9 +43,12 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export async function apiUpload<T>(path: string, file: File): Promise<T> {
+export async function apiUpload<T>(path: string, file: File, fields: Record<string, string> = {}): Promise<T> {
   const formData = new FormData();
   formData.append("file", file);
+  for (const [key, value] of Object.entries(fields)) {
+    formData.append(key, value);
+  }
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method: "POST",

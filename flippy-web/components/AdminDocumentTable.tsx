@@ -2,11 +2,33 @@
 
 import { useMemo, useState } from "react";
 import type { DocumentSummary } from "@/types/document";
+import type { DocumentFolder } from "@/types/folder";
 import styles from "./AdminDocumentTable.module.css";
+
+interface FolderOption {
+  id: string | null;
+  label: string;
+}
+
+function buildFolderOptions(folders: DocumentFolder[]): FolderOption[] {
+  const byId = new Map(folders.map((f) => [f.id, f]));
+  function pathOf(folder: DocumentFolder): string {
+    const parent = folder.parent_id ? byId.get(folder.parent_id) : undefined;
+    return parent ? `${pathOf(parent)} / ${folder.name}` : folder.name;
+  }
+  return [
+    { id: null, label: "Raíz" },
+    ...folders
+      .map((f) => ({ id: f.id, label: pathOf(f) }))
+      .sort((a, b) => a.label.localeCompare(b.label)),
+  ];
+}
 
 interface AdminDocumentTableProps {
   documents: DocumentSummary[];
   onDelete: (id: string) => void;
+  folders?: DocumentFolder[];
+  onMove?: (documentId: string, folderId: string | null) => void;
 }
 
 const STATUS_LABEL: Record<DocumentSummary["status"], string> = {
@@ -17,10 +39,11 @@ const STATUS_LABEL: Record<DocumentSummary["status"], string> = {
 
 const PAGE_SIZE_OPTIONS = [10, 50, 100];
 
-export default function AdminDocumentTable({ documents, onDelete }: AdminDocumentTableProps) {
+export default function AdminDocumentTable({ documents, onDelete, folders = [], onMove }: AdminDocumentTableProps) {
   const [query, setQuery] = useState("");
   const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[0]);
   const [page, setPage] = useState(1);
+  const folderOptions = useMemo(() => buildFolderOptions(folders), [folders]);
 
   const filtered = useMemo(
     () => documents.filter((doc) => doc.name.toLowerCase().includes(query.trim().toLowerCase())),
@@ -90,6 +113,7 @@ export default function AdminDocumentTable({ documents, onDelete }: AdminDocumen
               <th>Tipo</th>
               <th>Estado</th>
               <th>Chunks</th>
+              {onMove && <th>Carpeta</th>}
               <th aria-label="Acciones" />
             </tr>
           </thead>
@@ -104,6 +128,22 @@ export default function AdminDocumentTable({ documents, onDelete }: AdminDocumen
                   </span>
                 </td>
                 <td>{doc.chunk_count}</td>
+                {onMove && (
+                  <td>
+                    <select
+                      className={styles.folderSelect}
+                      value={doc.folder_id ?? ""}
+                      onChange={(e) => onMove(doc.id, e.target.value || null)}
+                      aria-label={`Mover ${doc.name}`}
+                    >
+                      {folderOptions.map((option) => (
+                        <option key={option.id ?? "root"} value={option.id ?? ""}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                )}
                 <td>
                   <button type="button" className={styles.deleteButton} onClick={() => onDelete(doc.id)}>
                     Eliminar

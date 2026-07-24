@@ -100,3 +100,107 @@ def test_upload_txt_processes_and_lists(admin_token):
         f"/api/v1/admin/documents/{doc_id}", headers={"Authorization": f"Bearer {admin_token}"}
     )
     assert delete_response.status_code == 200
+
+
+@pytest.fixture
+def auth_headers(admin_token):
+    return {"Authorization": f"Bearer {admin_token}"}
+
+
+def test_folder_create_requires_admin(non_admin_token):
+    response = client.post(
+        "/api/v1/admin/folders",
+        headers={"Authorization": f"Bearer {non_admin_token}"},
+        json={"name": "Contratos"},
+    )
+    assert response.status_code == 403
+
+
+def test_folder_crud_and_nesting(auth_headers):
+    parent = client.post("/api/v1/admin/folders", headers=auth_headers, json={"name": "Presupuestos"})
+    assert parent.status_code == 200
+    parent_id = parent.json()["id"]
+    assert parent.json()["parent_id"] is None
+
+    child = client.post(
+        "/api/v1/admin/folders",
+        headers=auth_headers,
+        json={"name": "2026", "parent_id": parent_id},
+    )
+    assert child.status_code == 200
+    child_id = child.json()["id"]
+    assert child.json()["parent_id"] == parent_id
+
+    listed = client.get("/api/v1/admin/folders", headers=auth_headers)
+    assert listed.status_code == 200
+    ids = {f["id"] for f in listed.json()}
+    assert {parent_id, child_id} <= ids
+
+    renamed = client.patch(
+        f"/api/v1/admin/folders/{child_id}", headers=auth_headers, json={"name": "2026-renombrada"}
+    )
+    assert renamed.status_code == 200
+    assert renamed.json()["name"] == "2026-renombrada"
+    assert renamed.json()["parent_id"] == parent_id  # rename-only no debe tocar parent_id
+
+    moved = client.patch(
+        f"/api/v1/admin/folders/{child_id}", headers=auth_headers, json={"parent_id": None}
+    )
+    assert moved.status_code == 200
+    assert moved.json()["parent_id"] is None  # movida a raíz
+
+    # la subcarpeta ya se movió a raíz, así que el padre ahora está vacío y puede borrarse
+    delete_parent = client.delete(f"/api/v1/admin/folders/{parent_id}", headers=auth_headers)
+    assert delete_parent.status_code == 200
+
+    delete_child = client.delete(f"/api/v1/admin/folders/{child_id}", headers=auth_headers)
+    assert delete_child.status_code == 200
+
+
+def test_folder_delete_blocked_when_not_empty(auth_headers):
+    folder = client.post("/api/v1/admin/folders", headers=auth_headers, json={"name": "No vacía"})
+    folder_id = folder.json()["id"]
+
+    subfolder = client.post(
+        "/api/v1/admin/folders", headers=auth_headers, json={"name": "Sub", "parent_id": folder_id}
+    )
+    subfolder_id = subfolder.json()["id"]
+
+    blocked = client.delete(f"/api/v1/admin/folders/{folder_id}", headers=auth_headers)
+    assert blocked.status_code == 409
+
+    # limpieza
+    client.delete(f"/api/v1/admin/folders/{subfolder_id}", headers=auth_headers)
+    client.delete(f"/api/v1/admin/folders/{folder_id}", headers=auth_headers)
+
+
+def test_document_can_be_created_in_folder_and_moved(auth_headers):
+    folder = client.post("/api/v1/admin/folders", headers=auth_headers, json={"name": "Manuales"})
+    folder_id = folder.json()["id"]
+
+    upload = client.post(
+        "/api/v1/admin/documents",
+        headers=auth_headers,
+        data={"folder_id": folder_id},
+        files={"file": ("manual.txt", io.BytesIO(b"contenido del manual"), "text/plain")},
+    )
+    assert upload.status_code == 200
+    doc = upload.json()
+    assert doc["folder_id"] == folder_id
+    doc_id = doc["id"]
+
+    root_listing = client.get("/api/v1/admin/documents", headers=auth_headers)
+    assert doc_id not in {d["id"] for d in root_listing.json()}
+
+    folder_listing = client.get(f"/api/v1/admin/documents?folder_id={folder_id}", headers=auth_headers)
+    assert doc_id in {d["id"] for d in folder_listing.json()}
+
+    moved = client.patch(
+        f"/api/v1/admin/documents/{doc_id}/folder", headers=auth_headers, json={"folder_id": None}
+    )
+    assert moved.status_code == 200
+    assert moved.json()["folder_id"] is None
+
+    # limpieza
+    client.delete(f"/api/v1/admin/documents/{doc_id}", headers=auth_headers)
+    client.delete(f"/api/v1/admin/folders/{folder_id}", headers=auth_headers)

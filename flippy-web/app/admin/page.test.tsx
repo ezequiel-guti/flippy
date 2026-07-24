@@ -6,19 +6,38 @@ jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock }),
 }));
 
+function mockFetchByUrl(responses: Record<string, { ok: boolean; status: number; json?: () => Promise<unknown> }>) {
+  global.fetch = jest.fn((input: RequestInfo | URL) => {
+    const url = typeof input === "string" ? input : input.toString();
+    const match = Object.keys(responses).find((key) => url.includes(key));
+    const response = match ? responses[match] : { ok: false, status: 404, json: async () => [] };
+    return Promise.resolve(response as Response);
+  }) as jest.Mock;
+}
+
 describe("AdminPage", () => {
   beforeEach(() => {
     pushMock.mockClear();
-    global.fetch = jest.fn();
   });
 
   it("renders the document list on successful load", async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      json: async () => [
-        { id: "1", name: "manual.pdf", type: "pdf", status: "ready", chunk_count: 5, created_at: "2026-07-13T00:00:00Z" },
-      ],
+    mockFetchByUrl({
+      "/admin/folders": { ok: true, status: 200, json: async () => [] },
+      "/admin/documents": {
+        ok: true,
+        status: 200,
+        json: async () => [
+          {
+            id: "1",
+            name: "manual.pdf",
+            type: "pdf",
+            status: "ready",
+            chunk_count: 5,
+            folder_id: null,
+            created_at: "2026-07-13T00:00:00Z",
+          },
+        ],
+      },
     });
 
     render(<AdminPage />);
@@ -27,7 +46,10 @@ describe("AdminPage", () => {
   });
 
   it("redirects to /login on 403", async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false, status: 403 });
+    mockFetchByUrl({
+      "/admin/folders": { ok: true, status: 200, json: async () => [] },
+      "/admin/documents": { ok: false, status: 403 },
+    });
 
     render(<AdminPage />);
 
@@ -35,7 +57,10 @@ describe("AdminPage", () => {
   });
 
   it("shows an error message when loading fails for another reason", async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false, status: 500 });
+    mockFetchByUrl({
+      "/admin/folders": { ok: true, status: 200, json: async () => [] },
+      "/admin/documents": { ok: false, status: 500 },
+    });
 
     render(<AdminPage />);
 

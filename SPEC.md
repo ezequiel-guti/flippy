@@ -18,6 +18,8 @@
 | 4 | 2026-07-15 | §3 | F-03 ampliado: eliminar chat (menú kebab + modal de confirmación + comportamiento del chat activo) — la opción de renombrar ya estaba especificada pero nunca se había implementado ninguna de las dos; el ícono kebab del sidebar era decorativo | El usuario reportó no poder eliminar un chat; investigación confirmó que la funcionalidad nunca se construyó en frontend ni backend |
 | 5 | 2026-07-17 | §3, §7 | F-04 implementado: bucket privado `chat-attachments` + URL firmada resuelta en cada lectura, streaming SSE (no "llamada estándar"). Modelo corregido de `claude-3-5-sonnet-20241022` (oct-2024, casi seguro retirado) a `claude-sonnet-5` — sin verificación en vivo por falta de `ANTHROPIC_API_KEY` | Mismo patrón de staleness ya visto con `gemini-2.0-flash` en el Incremento 7; corregido proactivamente en vez de esperar a que falle en producción |
 | 6 | 2026-07-19 | §3 (F-08) | Íconos PWA generados (192/512/apple-touch), meta tags iOS en `layout.tsx`, banner de onboarding de instalación (`IOSInstallBanner.tsx`) | Auditoría de Hito 1 detectó `manifest.json` apuntando a archivos de ícono inexistentes — instalabilidad rota; y ausencia total del banner de onboarding iOS que F-08 punto 1 ya especificaba pero nunca se había construido |
+| 7 | 2026-07-23 | §2, §6, §12 | OD-01 resuelta: el plan gratuito da acceso completo durante los primeros 6 meses desde el alta (`created_at`); vencidos, el acceso se bloquea por completo hasta que el usuario se suscriba. Nueva RN-07. Nueva OD-03 (interacción con `cancelado` de usuarios que sí llegaron a pagar) | Confirmado por Virgilio vía el desarrollador — límite de tipo temporal, no por cantidad de mensajes ni corpus reducido |
+| 8 | 2026-07-24 | §3 (F-05), §4, §6 | Carpetas y subcarpetas para organizar documentos del corpus: nueva tabla `document_folders` (anidamiento ilimitado vía `parent_id`), `documents.folder_id`, RN-08 (solo administrador, no se puede eliminar una carpeta no vacía, sin impacto en el pipeline RAG) | Pedido directo del desarrollador para ordenar el corpus a medida que crece; confirmado que las carpetas son puramente organizativas y no deben tocar chunking/embeddings/retrieval |
 
 ---
 
@@ -133,7 +135,7 @@ Archivo:             extraído del prototipo → flippy-web/public/icons/logo-sh
 
 | Rol | Descripción | Acceso |
 |-----|-------------|--------|
-| **Usuario gratuito** | Miembro registrado sin suscripción activa | Chat limitado (definición pendiente — ver §12) |
+| **Usuario gratuito** | Miembro registrado sin suscripción activa | Chat completo durante 6 meses desde el alta, luego bloqueado (RN-07) |
 | **Usuario pago** | Miembro con suscripción mensual activa | Chat completo + análisis de imágenes |
 | **Usuario en mora** | Suscripción con pago rechazado, reintentos en curso | Acceso degradado al límite del plan gratuito |
 | **Usuario cancelado** | Suscripción cancelada definitivamente | Solo plan gratuito |
@@ -186,6 +188,10 @@ Archivo:             extraído del prototipo → flippy-web/public/icons/logo-sh
 4. Un background task procesa el archivo: extracción de texto → chunking → embeddings → pgvector
 5. El administrador puede listar documentos (nombre, tipo, estado, cantidad de chunks)
 6. El administrador puede eliminar un documento (elimina archivo, chunks y embeddings)
+7. El administrador puede crear carpetas y subcarpetas (anidamiento ilimitado) para organizar los documentos subidos, y renombrarlas
+8. El administrador puede subir un documento directamente dentro de una carpeta, o mover un documento existente entre carpetas (o a la raíz)
+9. El listado de documentos permite navegar por carpeta (breadcrumb) o ver todo el corpus sin filtrar
+10. El administrador puede eliminar una carpeta solo si está vacía (sin documentos ni subcarpetas) — si no lo está, la API devuelve error explícito indicando que debe vaciarse primero (RN-11)
 
 ### F-06: Suscripción con Mercado Pago
 1. El usuario en plan gratuito accede al flujo de suscripción
@@ -247,6 +253,15 @@ Archivo:             extraído del prototipo → flippy-web/public/icons/logo-sh
 | image_url | text nullable | URL de imagen adjunta en Supabase Storage |
 | created_at | timestamptz | Timestamp del mensaje |
 
+**document_folders**
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| id | uuid PK | Identificador único de la carpeta |
+| name | text | Nombre de la carpeta |
+| parent_id | uuid FK → document_folders, nullable | Carpeta padre (null = carpeta de nivel raíz) — anidamiento ilimitado |
+| created_at | timestamptz | Fecha de creación |
+| updated_at | timestamptz | Última actualización (renombre, etc.) |
+
 **documents**
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
@@ -256,6 +271,7 @@ Archivo:             extraído del prototipo → flippy-web/public/icons/logo-sh
 | storage_path | text | Ruta en Supabase Storage |
 | status | enum | `processing` \| `ready` \| `error` |
 | chunk_count | integer | Cantidad de chunks generados |
+| folder_id | uuid FK → document_folders, nullable | Carpeta contenedora (null = raíz del corpus) |
 | created_at | timestamptz | Fecha de subida |
 
 **document_chunks**
@@ -381,8 +397,8 @@ USER:    [consulta del usuario + imagen si aplica]
 |--------|-------------|--------|
 | `activo` | Suscripción vigente y al día | Completo |
 | `en_mora` | Pago rechazado, reintentos en curso | Degradado al límite del plan gratuito |
-| `gratuito` | Plan gratuito o sin suscripción | Limitado (ver §12 OD-01) |
-| `cancelado` | Suscripción cancelada definitivamente | Solo plan gratuito |
+| `gratuito` | Plan gratuito o sin suscripción | Completo durante los primeros 6 meses desde el alta; bloqueado al vencer (ver RN-07) |
+| `cancelado` | Suscripción cancelada definitivamente | Solo plan gratuito (sujeto también a la ventana de 6 meses de RN-07) |
 
 ### RN-02: Transiciones de estado
 Las transiciones de estado **solo** se disparan por webhooks de Mercado Pago, nunca manualmente desde el frontend.
@@ -414,6 +430,18 @@ Las transiciones de estado **solo** se disparan por webhooks de Mercado Pago, nu
 - Solo el administrador puede subir, listar o eliminar documentos del corpus
 - Al eliminar un documento se eliminan también sus chunks y embeddings
 - El procesamiento es asincrónico — el admin recibe confirmación inmediata y el documento queda en estado `processing` hasta completar la ingesta
+
+### RN-07: Vencimiento del plan gratuito (OD-01 resuelta)
+- El plan gratuito otorga acceso completo a la IA durante los primeros 6 meses desde la fecha de alta (`users.created_at`)
+- Cumplidos los 6 meses sin que el usuario haya iniciado una suscripción paga, el acceso a la IA se bloquea por completo — debe iniciar el flujo de suscripción (F-06) para recuperarlo
+- A diferencia de las transiciones de RN-02, este vencimiento es por tiempo, no por webhook de MP — requiere un chequeo programado (job/cron, o verificación en el momento de la consulta comparando `created_at` contra la fecha actual) que identifique usuarios en `gratuito` cuya ventana de 6 meses expiró
+- No agrega un campo nuevo a `users` — se calcula a partir de `created_at` (§4) ya existente
+
+### RN-08: Carpetas y subcarpetas de documentos
+- Solo el administrador puede crear, renombrar, eliminar o mover carpetas — mismo alcance de rol que RN-06
+- Anidamiento ilimitado vía `parent_id` (una carpeta puede contener subcarpetas sin límite de profundidad)
+- Una carpeta no puede eliminarse si tiene documentos o subcarpetas — la API rechaza el borrado con un error explícito; el admin debe vaciarla primero (mover o eliminar su contenido)
+- Las carpetas son puramente organizativas: no afectan el pipeline de ingesta ni el RAG — chunking, embeddings y retrieval funcionan igual sin importar en qué carpeta esté un documento (o si está en la raíz)
 
 ---
 
@@ -572,8 +600,9 @@ Un incremento está completo cuando:
 
 | # | Decisión | Responsable | Estado |
 |---|----------|-------------|--------|
-| OD-01 | **Límite del plan gratuito:** ¿mensajes/día, mensajes/mes, o acceso a corpus reducido? | Virgilio (cliente) | Pendiente de confirmación |
+| OD-01 | **Límite del plan gratuito:** ¿mensajes/día, mensajes/mes, o acceso a corpus reducido? | Virgilio (cliente) | ✅ Resuelta 2026-07-23 — límite temporal de 6 meses desde el alta, bloqueo total al vencer (ver RN-07) |
 | OD-02 | **Política de retención de PII:** ¿cuánto tiempo se conservan los datos de usuarios cancelados? | Virgilio + desarrollador | Pendiente para producción |
+| OD-03 | **Cancelado tras haber pagado:** un usuario que sí llegó a pagar y luego cancela (RN-03) hoy conserva "acceso solo plan gratuito" — ¿queda sujeto a la ventana original de 6 meses desde su alta (probablemente ya vencida), o recibe una ventana nueva de 6 meses desde la cancelación? | Virgilio (cliente) | Pendiente de confirmación — bloquea el diseño final de F-06/F-07 |
 
 ---
 
@@ -603,3 +632,5 @@ Un incremento está completo cuando:
 | Incremento 9.2 | Verificación E2E real de F-04 + fix de bug encontrado (prompt RAG bloqueaba el análisis de imagen) | claude-sonnet-5 | 2026-07-18 | El cliente configuró `ANTHROPIC_API_KEY`. Verificación en vivo: `claude-sonnet-5` confirmado como modelo válido y con soporte de visión (Incremento 9.1 confirmado correcto), formato de streaming SSE parseado correctamente contra la respuesta real de la API. **Bug encontrado y corregido:** el endpoint de imagen reutilizaba `SYSTEM_PROMPT` (el del chat de texto RAG, "Respondé ÚNICAMENTE basándote en el contexto provisto"), causando que Claude se negara a describir imágenes sin contexto de corpus relacionado — el comportamiento opuesto al pedido en F-04 ("Claude analiza la imagen combinándola con los chunks RAG"). Agregado `VISION_SYSTEM_PROMPT` separado en `chat/services.py` que instruye a Claude a analizar la imagen siempre, integrando contexto del corpus solo si es relevante. Verificado en vivo con imagen real (patrón de tablero de ajedrez 64×64) tanto con caption como sin caption — en ambos casos Claude describe la imagen correctamente. 27/27 tests pytest siguen en verde tras el cambio de prompt |
 | Incremento 10 | PWA — íconos, meta tags iOS, onboarding de instalación (F-08, Hito 1) | claude-sonnet-5 | 2026-07-19 | Cierre de gaps detectados en la auditoría de Hito 1: `manifest.json` referenciaba `/icons/icon-192.png` e `icon-512.png` que no existían (solo había `logo-shield.png`, 207×245, no cuadrado) — instalabilidad de la PWA rota en la práctica. Generados `icon-192.png`, `icon-512.png` y `apple-touch-icon.png` (180×180) con Pillow a partir del logo existente, centrado sobre fondo `#F4F1EC` (color de marca) con padding de zona segura para íconos maskable; `manifest.json` actualizado con `purpose: "any maskable"`. `layout.tsx`: agregados `metadata.icons.apple`, `metadata.appleWebApp` (capable/statusBarStyle/title) y `viewport.themeColor` vía la Metadata API de Next.js — verificado en el HTML generado por `next build` que los meta tags `apple-mobile-web-app-capable`, `apple-touch-icon` y `theme-color` están presentes. Nuevo componente `IOSInstallBanner.tsx`: detecta iOS Safari no instalado (UA + `navigator.standalone`/`matchMedia('(display-mode: standalone)')`) y muestra un banner persistente con las instrucciones de F-08 punto 1 ("Compartir → Agregar a pantalla de inicio"), dismisseable con persistencia en localStorage. 4 tests Jest nuevos (43/43 total) verdes, build de producción limpio. **Fuera de alcance de este incremento** (no es tarea de código): pruebas en dispositivo físico (iPhone/Android reales) — criterio de aceptación que requiere testing manual del desarrollador, no delegable |
 | Incremento 11 | Pantalla de registro — F-01 (Hito 1) | claude-sonnet-5 | 2026-07-19 | Gap encontrado mientras se armaba la checklist de pruebas manuales para el desarrollador: la pantalla `/login` solo tenía formulario de login, sin ningún link ni UI para registrarse — el endpoint `POST /api/v1/auth/register` existía en el backend desde el Incremento 3 pero nunca tuvo consumidor en el frontend, así que no había forma de crear una cuenta real desde la app (solo por API directa o dashboard de Supabase). Confirmado contra §2/§3 de SPEC.md que el modelo de producto es autoregistro abierto (no altas por admin) antes de implementar. `login/page.tsx` ahora tiene un toggle Ingresar/Registrate sobre el mismo formulario (mismos campos, cambia el endpoint llamado); mensajes de error diferenciados (401 login = credenciales inválidas, 422 registro = email ya registrado). §3 F-01 actualizado con el paso del toggle y la aclaración de autoregistro abierto. 4 tests Jest nuevos (46/46 total) verdes, build de producción limpio |
+| $spec update | OD-01 resuelta: límite del plan gratuito = 6 meses desde el alta, bloqueo total al vencer (RN-07 nueva) | claude-sonnet-5 | 2026-07-23 | Confirmado por Virgilio vía el desarrollador. Sin cambios de código todavía — el enforcement (job/chequeo por `created_at`) queda pendiente para el incremento de Mercado Pago (F-06/F-07). Nueva OD-03 abierta: interacción con `cancelado` de usuarios que sí llegaron a pagar |
+| Incremento 12 | Carpetas y subcarpetas de documentos — F-05, §4, RN-08 (Hito 2) | claude-sonnet-5 | 2026-07-24 | Pedido directo del desarrollador para organizar el corpus a medida que crece. Migración 0007: tabla `document_folders` (`parent_id` self-referencing, anidamiento ilimitado, `on delete restrict` — backstop de RN-08 a nivel DB) + `documents.folder_id`; aplicada contra Supabase real. Backend: `FoldersService` (CRUD + regla de no-borrado si no está vacía, verificada explícitamente antes del delete para devolver 409 con mensaje claro en vez de depender del error de FK) y `DocumentsService.move_document`/`list_documents` extendido con filtro por carpeta; nuevos endpoints `/admin/folders` (CRUD) y `PATCH /admin/documents/{id}/folder`; `POST /admin/documents` acepta `folder_id` opcional (multipart form field). Frontend: `AdminFolderPanel.tsx` (breadcrumb navegable + grid de subcarpetas + crear/renombrar/eliminar inline), `AdminDocumentTable` extendido con selector de carpeta por fila (`onMove`, opcional — no rompe usos existentes sin esa prop), `admin/page.tsx` reescrito para manejar navegación por carpeta + toggle "ver todo el corpus sin filtrar". `apiUpload` en `services/api.ts` generalizado para aceptar campos de formulario extra (mismo patrón que `apiStreamUpload`). 6 tests pytest nuevos contra Supabase real (crear/anidar/renombrar/mover/borrar carpeta, bloqueo de borrado no vacío, documento creado y movido entre carpetas — 31/31 total) y 6 tests Jest nuevos (52/52 total, incluye la suite nueva `AdminFolderPanel.test.tsx`), build de producción limpio |

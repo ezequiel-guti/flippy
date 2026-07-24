@@ -25,7 +25,7 @@ CONTENT_TYPES = {
 
 class DocumentsService:
     @staticmethod
-    def create_document(name: str, doc_type: str, content: bytes) -> dict:
+    def create_document(name: str, doc_type: str, content: bytes, folder_id: str | None = None) -> dict:
         if doc_type not in ALLOWED_TYPES:
             raise ValueError(f"Unsupported document type: {doc_type}")
 
@@ -40,16 +40,16 @@ class DocumentsService:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    insert into documents (id, name, type, storage_path, status, chunk_count)
-                    values (%s, %s, %s, %s, 'processing', 0)
+                    insert into documents (id, name, type, storage_path, status, chunk_count, folder_id)
+                    values (%s, %s, %s, %s, 'processing', 0, %s)
                     """,
-                    (doc_id, name, doc_type, storage_path),
+                    (doc_id, name, doc_type, storage_path, folder_id),
                 )
             conn.commit()
         finally:
             conn.close()
 
-        return {"id": doc_id, "name": name, "type": doc_type, "storage_path": storage_path}
+        return {"id": doc_id, "name": name, "type": doc_type, "storage_path": storage_path, "folder_id": folder_id}
 
     @staticmethod
     def process_document(doc_id: str, content: bytes, doc_type: str) -> None:
@@ -98,13 +98,23 @@ class DocumentsService:
             conn.close()
 
     @staticmethod
-    def list_documents() -> list[dict]:
+    def list_documents(folder_id: str | None = None, filter_by_folder: bool = False) -> list[dict]:
         conn = get_db_connection()
         try:
             with conn.cursor() as cur:
-                cur.execute(
-                    "select id, name, type, status, chunk_count, created_at from documents order by created_at desc"
+                query = (
+                    "select id, name, type, status, chunk_count, folder_id, created_at "
+                    "from documents"
                 )
+                params: tuple = ()
+                if filter_by_folder:
+                    if folder_id is None:
+                        query += " where folder_id is null"
+                    else:
+                        query += " where folder_id = %s"
+                        params = (folder_id,)
+                query += " order by created_at desc"
+                cur.execute(query, params)
                 rows = cur.fetchall()
         finally:
             conn.close()
@@ -116,7 +126,8 @@ class DocumentsService:
                 "type": row[2],
                 "status": row[3],
                 "chunk_count": row[4],
-                "created_at": row[5].isoformat(),
+                "folder_id": str(row[5]) if row[5] else None,
+                "created_at": row[6].isoformat(),
             }
             for row in rows
         ]
@@ -142,3 +153,143 @@ class DocumentsService:
             pass
 
         return True
+
+    @staticmethod
+    def move_document(doc_id: str, folder_id: str | None) -> dict | None:
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    update documents set folder_id = %s where id = %s
+                    returning id, name, type, status, chunk_count, folder_id, created_at
+                    """,
+                    (folder_id, doc_id),
+                )
+                row = cur.fetchone()
+            conn.commit()
+        finally:
+            conn.close()
+
+        if not row:
+            return None
+        return {
+            "id": str(row[0]),
+            "name": row[1],
+            "type": row[2],
+            "status": row[3],
+            "chunk_count": row[4],
+            "folder_id": str(row[5]) if row[5] else None,
+            "created_at": row[6].isoformat(),
+        }
+
+
+class FoldersService:
+    @staticmethod
+    def create_folder(name: str, parent_id: str | None) -> dict:
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    insert into document_folders (name, parent_id)
+                    values (%s, %s)
+                    returning id, name, parent_id, created_at, updated_at
+                    """,
+                    (name, parent_id),
+                )
+                row = cur.fetchone()
+            conn.commit()
+        finally:
+            conn.close()
+
+        return FoldersService._row_to_dict(row)
+
+    @staticmethod
+    def list_folders() -> list[dict]:
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "select id, name, parent_id, created_at, updated_at "
+                    "from document_folders order by name asc"
+                )
+                rows = cur.fetchall()
+        finally:
+            conn.close()
+
+        return [FoldersService._row_to_dict(row) for row in rows]
+
+    @staticmethod
+    def update_folder(folder_id: str, name: str | None, parent_id: str | None, move_to_root: bool) -> dict | None:
+        """move_to_root distinguishes 'parent_id not sent' (keep as-is) from
+        'parent_id explicitly null' (move to root) since both are None otherwise."""
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                fields = []
+                params: list = []
+                if name is not None:
+                    fields.append("name = %s")
+                    params.append(name)
+                if move_to_root or parent_id is not None:
+                    fields.append("parent_id = %s")
+                    params.append(parent_id)
+                if not fields:
+                    cur.execute(
+                        "select id, name, parent_id, created_at, updated_at "
+                        "from document_folders where id = %s",
+                        (folder_id,),
+                    )
+                    row = cur.fetchone()
+                    return FoldersService._row_to_dict(row) if row else None
+
+                fields.append("updated_at = now()")
+                params.append(folder_id)
+                cur.execute(
+                    f"update document_folders set {', '.join(fields)} where id = %s "
+                    "returning id, name, parent_id, created_at, updated_at",
+                    params,
+                )
+                row = cur.fetchone()
+            conn.commit()
+        finally:
+            conn.close()
+
+        return FoldersService._row_to_dict(row) if row else None
+
+    @staticmethod
+    def delete_folder(folder_id: str) -> tuple[bool, str | None]:
+        """Returns (deleted, error). RN-08: a non-empty folder cannot be deleted."""
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("select id from document_folders where id = %s", (folder_id,))
+                if not cur.fetchone():
+                    return False, "not_found"
+
+                cur.execute(
+                    "select count(*) from document_folders where parent_id = %s", (folder_id,)
+                )
+                (subfolder_count,) = cur.fetchone()
+                cur.execute("select count(*) from documents where folder_id = %s", (folder_id,))
+                (document_count,) = cur.fetchone()
+                if subfolder_count > 0 or document_count > 0:
+                    return False, "not_empty"
+
+                cur.execute("delete from document_folders where id = %s", (folder_id,))
+            conn.commit()
+        finally:
+            conn.close()
+
+        return True, None
+
+    @staticmethod
+    def _row_to_dict(row) -> dict:
+        return {
+            "id": str(row[0]),
+            "name": row[1],
+            "parent_id": str(row[2]) if row[2] else None,
+            "created_at": row[3].isoformat(),
+            "updated_at": row[4].isoformat(),
+        }

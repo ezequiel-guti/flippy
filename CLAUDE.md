@@ -41,6 +41,7 @@
 - Streaming en todas las respuestas del chat (SSE)
 - Estados de usuario: `activo` | `en_mora` | `gratuito` | `cancelado`
 - Transiciones de estado solo por webhooks de Mercado Pago, nunca desde el frontend
+- Plan gratuito: acceso completo por 6 meses desde el alta (`created_at`), bloqueo total al vencer (RN-07, OD-01 resuelta 2026-07-23) — enforcement pendiente de implementar junto con F-06/F-07
 - Sin micrófono/voz en esta fase · Sin modo oscuro en esta fase
 
 ### Identidad visual
@@ -49,7 +50,7 @@
 - Nombre: "Flippy" (con doble P)
 
 ### Decisión abierta
-- OD-01: Límite del plan gratuito (confirmar con Virgilio antes del Hito 3)
+- OD-03: Usuario `cancelado` que sí llegó a pagar — ¿ventana original de 6 meses desde el alta, o ventana nueva desde la cancelación? (confirmar con Virgilio antes de diseñar F-06/F-07)
 
 ---
 

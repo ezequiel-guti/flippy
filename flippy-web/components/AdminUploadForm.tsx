@@ -6,11 +6,12 @@ import styles from "./AdminUploadForm.module.css";
 interface AdminUploadFormProps {
   onUpload: (file: File) => Promise<void>;
   existingNames?: string[];
+  currentFolderName?: string | null;
 }
 
 const ACCEPTED_EXTENSIONS = ".pdf,.docx,.txt,.json,.html,.jpg,.jpeg,.png";
 
-export default function AdminUploadForm({ onUpload, existingNames = [] }: AdminUploadFormProps) {
+export default function AdminUploadForm({ onUpload, existingNames = [], currentFolderName }: AdminUploadFormProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [duplicateName, setDuplicateName] = useState<string | null>(null);
@@ -54,7 +55,9 @@ export default function AdminUploadForm({ onUpload, existingNames = [] }: AdminU
   return (
     <form className={styles.form} onSubmit={handleSubmit}>
       <div className={styles.field}>
-        <span className={styles.fieldLabel}>Subir documento al corpus</span>
+        <span className={styles.fieldLabel}>
+          Subir documento {currentFolderName ? `a "${currentFolderName}"` : "a la raíz del corpus"}
+        </span>
         <div className={styles.picker}>
           <button
             type="button"
