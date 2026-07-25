@@ -115,7 +115,7 @@ export default function AdminFolderPanel({
 
     if (renamingId === folder.id) {
       return (
-        <li key={folder.id} style={{ paddingLeft: depth * 16 }}>
+        <li key={folder.id} style={{ marginLeft: depth === 0 ? 0 : 18 }}>
           <form className={styles.renameForm} onSubmit={(e) => handleRenameSubmit(e, folder.id)}>
             <input
               autoFocus
@@ -130,11 +130,8 @@ export default function AdminFolderPanel({
     }
 
     return (
-      <li key={folder.id}>
-        <div
-          className={`${styles.node} ${isActive ? styles.nodeActive : ""}`}
-          style={{ paddingLeft: 12 + depth * 16 }}
-        >
+      <li key={folder.id} style={{ marginLeft: depth * 18 }}>
+        <div className={`${styles.node} ${isActive ? styles.nodeActive : ""}`}>
           <button
             type="button"
             className={styles.chevron}
@@ -148,7 +145,9 @@ export default function AdminFolderPanel({
             <span className={styles.folderIcon}>
               <FolderIcon />
             </span>
-            <span className={styles.folderName}>{folder.name}</span>
+            <span className={`${styles.folderName} ${depth === 0 ? styles.folderNameTopLevel : ""}`}>
+              {folder.name}
+            </span>
           </button>
           <div className={styles.nodeActions}>
             <button
@@ -168,6 +167,7 @@ export default function AdminFolderPanel({
               ✕
             </button>
           </div>
+          <span className={styles.statusDot} aria-hidden />
         </div>
         {hasChildren && isExpanded && <ul className={styles.tree}>{kids.map((kid) => renderNode(kid, depth + 1))}</ul>}
       </li>

@@ -31,7 +31,7 @@
 .tree {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 6px;
   list-style: none;
 }
 
@@ -39,16 +39,29 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  border-radius: var(--border-radius-sm);
   width: 100%;
+  background: var(--color-white);
+  border: 1px solid var(--color-line);
+  border-radius: var(--border-radius-md);
+  padding-right: 10px;
 }
 
 .node:hover {
-  background: rgba(43, 43, 45, 0.05);
+  border-color: var(--color-primary);
 }
 
 .nodeActive {
-  background: rgba(139, 46, 59, 0.1);
+  border-color: var(--color-primary);
+  background: var(--color-primary-tint);
+}
+
+.statusDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-pine);
+  flex-shrink: 0;
+  margin-right: 10px;
 }
 
 .nodeActive .folderName {
@@ -103,6 +116,13 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.folderNameTopLevel {
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-size: var(--font-size-label);
 }
 
 .nodeActions {
