@@ -7,8 +7,9 @@ describe("AdminTopBar", () => {
     expect(screen.getByText("Documentos")).toBeInTheDocument();
   });
 
-  it("shows the current folder name alongside Documentos", () => {
+  it("shows the current folder name next to Documentos", () => {
     render(<AdminTopBar currentFolderName="Presupuestos" />);
-    expect(screen.getByText("Documentos · Presupuestos")).toBeInTheDocument();
+    expect(screen.getByText("Documentos")).toBeInTheDocument();
+    expect(screen.getByText("Presupuestos")).toBeInTheDocument();
   });
 });
