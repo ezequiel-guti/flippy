@@ -6,6 +6,7 @@ import { apiGet, apiUpload, apiDelete, apiPost, apiPatch, ApiError } from "@/ser
 import type { DocumentSummary } from "@/types/document";
 import type { DocumentFolder } from "@/types/folder";
 import AdminSidebar from "@/components/AdminSidebar";
+import AdminTopBar from "@/components/AdminTopBar";
 import AdminUploadForm from "@/components/AdminUploadForm";
 import AdminDocumentTable from "@/components/AdminDocumentTable";
 import AdminFolderPanel from "@/components/AdminFolderPanel";
@@ -130,10 +131,7 @@ export default function AdminPage() {
 
   return (
     <div className={styles.page}>
-      <header className={styles.topbar}>
-        <h1 className={styles.topbarTitle}>Documentos</h1>
-        {currentFolderName && <span className={styles.topbarFolder}>{currentFolderName}</span>}
-      </header>
+      <AdminTopBar currentFolderName={currentFolderName} />
 
       <div className={styles.layout}>
         <aside className={styles.sidebarPane}>
