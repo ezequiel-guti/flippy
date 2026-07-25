@@ -294,3 +294,13 @@ Racional: diagnosticar la causa raíz (regla CSS global de h1/h2/h3) en vez de f
 Alternativas consideradas: cambiar `.brandName` a `<h1>` en vez de bajar el peso de `.title` (descartado — un nav de sidebar no es semánticamente un heading de página, y hubiera düplicado el problema en sentido inverso); quitar el `font-weight: bold` de la regla global `h1, h2, h3` (descartado — esa regla es usada intencionalmente en otras páginas del sitio para dar peso a títulos reales, tocar el global hubiera arriesgado romper esos casos por un fix puntual de `/admin`).
 Impacto: `AdminTopBar.module.css` — `.title` con `font-weight: var(--font-weight-regular)` explícito; `AdminFolderPanel.module.css` — `.wrapper` background a `--color-bg`. Sin cambios de comportamiento, sin tests nuevos (los 2 tests de `AdminTopBar.test.tsx` ya verificaban el texto, no el peso visual). 57/57 tests Jest verdes, build de producción limpio.
 ════════════════════════════════════════════════════════
+
+════════════════════════════════════════════════════════
+📋 DECISIÓN — AdminTopBar igualado al ChatHeader en alto y tamaño de título (Incremento 12.8)
+════════════════════════════════════════════════════════
+Fecha: 2026-07-25
+Decisión: `AdminTopBar.module.css` copia los valores exactos de `ChatHeader.module.css` en los dos puntos pedidos: `padding: 16px 15px 13px` (define el alto del header, antes `20px 24px`) y `.title` a `16px` (antes `1.75rem` ≈ 28px, ahora el mismo tamaño que `.name` "Flippy" en el chat). `.folder` (nombre de la carpeta actual) se redujo a `var(--font-size-label)` para no quedar más grande que el propio título tras el cambio.
+Racional: pedido explícito y literal del desarrollador — "mismo alto que el header del chat" y "mismo tamaño y estilo que la palabra Flippy" — se tradujo en copiar los valores numéricos exactos de `ChatHeader`, no una aproximación visual.
+Alternativas consideradas: ninguna — instrucción numérica directa, sin ambigüedad de diseño que arbitrar.
+Impacto: `AdminTopBar.module.css` — `.header` (`padding`, `align-items: center` en vez de `baseline` ya que ambos elementos quedan chicos y no necesitan alineación por línea base), `.title` (`font-size: 16px`), `.folder` (`font-size: var(--font-size-label)`). Sin cambios en `AdminTopBar.tsx` ni en los tests existentes — ajuste puramente de estilos. 57/57 tests Jest verdes, build de producción limpio.
+════════════════════════════════════════════════════════
