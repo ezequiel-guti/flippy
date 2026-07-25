@@ -1,14 +1,7 @@
-.page {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-}
-
 .layout {
   display: grid;
   grid-template-columns: 280px 220px 1fr;
-  flex: 1;
-  min-height: 0;
+  height: 100vh;
 }
 
 .sidebarPane {
@@ -17,13 +10,19 @@
 
 .mainPane {
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--color-bg);
+}
+
+.mainContent {
+  flex: 1;
   overflow-y: auto;
-  width: 100%;
   padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  background: var(--color-bg);
 }
 
 .loading {

@@ -254,3 +254,13 @@ Racional: el desarrollador pidió explícitamente que la barra fuera "igual que 
 Alternativas consideradas: reutilizar `ChatHeader.tsx` directamente pasándole el texto por prop (descartado — `ChatHeader` tiene el botón de historial de chats hardcodeado con su propio `onOpenHistory`, y forzar props opcionales para ocultarlo en `/admin` complica un componente que hoy es simple; un componente nuevo con el mismo CSS es más claro que ramificar `ChatHeader` para dos contextos distintos).
 Impacto: `AdminTopBar.tsx` + `AdminTopBar.module.css` nuevos (mismo CSS que `ChatHeader.module.css`, sin `.historyButton`); `admin/page.tsx` usa `<AdminTopBar currentFolderName={...} />` en vez del `<header>` inline; `page.module.css` sin las clases `.topbar`/`.topbarTitle`/`.topbarFolder` del incremento anterior (ya no se usan). 2 tests Jest nuevos en `AdminTopBar.test.tsx` (57/57 total), build de producción limpio.
 ════════════════════════════════════════════════════════
+
+════════════════════════════════════════════════════════
+📋 DECISIÓN — Fix: AdminTopBar no debe cubrir todo el ancho de la página (Incremento 12.4)
+════════════════════════════════════════════════════════
+Fecha: 2026-07-25
+Decisión: Mover `AdminTopBar` de fuera del grid de 3 columnas (Incremento 12.3, cubría nav admin + árbol de carpetas + contenido) a adentro de `<main>`, arriba de la tabla — mismo patrón estructural que `ChatWindow`, donde `ChatHeader` vive dentro de la columna central y no arriba de `ChatSidebar`.
+Racional: el desarrollador compartió una captura de `/chat` mostrando que ahí el header NO ocupa todo el ancho — solo la columna de contenido, dejando el sidebar de chats a la izquierda sin header propio. El Incremento 12.3 había asumido "igual que el chat" como "mismo layout visual del header" pero no replicó correctamente su posicionamiento en el árbol de componentes; esta corrección alinea ambos aspectos.
+Alternativas consideradas: ninguna — es una corrección directa de posicionamiento, no una decisión de diseño nueva.
+Impacto: `admin/page.tsx` — `AdminTopBar` pasa a ser hijo de `<main>` (antes de `.mainContent`, el nuevo contenedor scrolleable que agrupa upload form + tabla); `page.module.css` — se eliminó el wrapper `.page` (flex column) del Incremento 12.2, `.layout` vuelve a ser el grid de `height:100vh` de nivel superior, `.mainPane` pasa a `display:flex; flex-direction:column` con `.mainContent` como área de scroll (mismo patrón que `.window`/`.messages` de `ChatWindow.module.css`). 57/57 tests Jest siguen en verde (cambio de posicionamiento, no de comportamiento — sin tests nuevos), build de producción limpio.
+════════════════════════════════════════════════════════

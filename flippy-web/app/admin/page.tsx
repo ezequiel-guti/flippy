@@ -130,23 +130,22 @@ export default function AdminPage() {
     : null;
 
   return (
-    <div className={styles.page}>
-      <AdminTopBar currentFolderName={currentFolderName} />
-
-      <div className={styles.layout}>
-        <aside className={styles.sidebarPane}>
-          <AdminSidebar activeHref="/admin" />
-        </aside>
-        <AdminFolderPanel
-          folders={folders}
-          currentFolderId={currentFolderId}
-          onNavigate={setCurrentFolderId}
-          onCreate={handleCreateFolder}
-          onRename={handleRenameFolder}
-          onDelete={handleDeleteFolder}
-          error={folderError}
-        />
-        <main className={styles.mainPane}>
+    <div className={styles.layout}>
+      <aside className={styles.sidebarPane}>
+        <AdminSidebar activeHref="/admin" />
+      </aside>
+      <AdminFolderPanel
+        folders={folders}
+        currentFolderId={currentFolderId}
+        onNavigate={setCurrentFolderId}
+        onCreate={handleCreateFolder}
+        onRename={handleRenameFolder}
+        onDelete={handleDeleteFolder}
+        error={folderError}
+      />
+      <main className={styles.mainPane}>
+        <AdminTopBar currentFolderName={currentFolderName} />
+        <div className={styles.mainContent}>
           <AdminUploadForm
             onUpload={handleUpload}
             existingNames={allDocuments.map((d) => d.name)}
@@ -170,8 +169,8 @@ export default function AdminPage() {
               onMove={handleMoveDocument}
             />
           )}
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }
