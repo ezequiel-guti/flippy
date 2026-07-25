@@ -134,43 +134,45 @@ export default function AdminPage() {
       <aside className={styles.sidebarPane}>
         <AdminSidebar activeHref="/admin" />
       </aside>
-      <AdminFolderPanel
-        folders={folders}
-        currentFolderId={currentFolderId}
-        onNavigate={setCurrentFolderId}
-        onCreate={handleCreateFolder}
-        onRename={handleRenameFolder}
-        onDelete={handleDeleteFolder}
-        error={folderError}
-      />
-      <main className={styles.mainPane}>
+      <div className={styles.rightPane}>
         <AdminTopBar currentFolderName={currentFolderName} />
-        <div className={styles.mainContent}>
-          <AdminUploadForm
-            onUpload={handleUpload}
-            existingNames={allDocuments.map((d) => d.name)}
-            currentFolderName={currentFolderName}
+        <div className={styles.contentRow}>
+          <AdminFolderPanel
+            folders={folders}
+            currentFolderId={currentFolderId}
+            onNavigate={setCurrentFolderId}
+            onCreate={handleCreateFolder}
+            onRename={handleRenameFolder}
+            onDelete={handleDeleteFolder}
+            error={folderError}
           />
-
-          {error && (
-            <p className={styles.error} role="alert">
-              {error}
-            </p>
-          )}
-
-          {isLoading ? (
-            <p className={styles.loading}>Cargando documentos…</p>
-          ) : (
-            <AdminDocumentTable
-              documents={documentsInCurrentFolder}
-              searchScope={allDocuments}
-              onDelete={handleDelete}
-              folders={folders}
-              onMove={handleMoveDocument}
+          <main className={styles.mainPane}>
+            <AdminUploadForm
+              onUpload={handleUpload}
+              existingNames={allDocuments.map((d) => d.name)}
+              currentFolderName={currentFolderName}
             />
-          )}
+
+            {error && (
+              <p className={styles.error} role="alert">
+                {error}
+              </p>
+            )}
+
+            {isLoading ? (
+              <p className={styles.loading}>Cargando documentos…</p>
+            ) : (
+              <AdminDocumentTable
+                documents={documentsInCurrentFolder}
+                searchScope={allDocuments}
+                onDelete={handleDelete}
+                folders={folders}
+                onMove={handleMoveDocument}
+              />
+            )}
+          </main>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

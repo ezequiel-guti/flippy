@@ -1,6 +1,6 @@
 .layout {
   display: grid;
-  grid-template-columns: 280px 220px 1fr;
+  grid-template-columns: 280px 1fr;
   height: 100vh;
 }
 
@@ -8,21 +8,28 @@
   min-width: 0;
 }
 
-.mainPane {
-  min-width: 0;
+.rightPane {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   height: 100%;
-  background: var(--color-bg);
 }
 
-.mainContent {
+.contentRow {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.mainPane {
+  min-width: 0;
   flex: 1;
   overflow-y: auto;
   padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  background: var(--color-bg);
 }
 
 .loading {
@@ -40,5 +47,9 @@
   .layout {
     grid-template-columns: 1fr;
     height: auto;
+  }
+
+  .contentRow {
+    flex-direction: column;
   }
 }
