@@ -192,6 +192,13 @@
   background: rgba(179, 38, 30, 0.08);
 }
 
+.searchScopeNote {
+  font-family: var(--font-secondary);
+  font-size: var(--font-size-label);
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
 .emptyState {
   color: var(--color-text-secondary);
   font-family: var(--font-secondary);

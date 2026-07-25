@@ -82,4 +82,34 @@ describe("AdminDocumentTable", () => {
     fireEvent.change(select, { target: { value: "f1" } });
     expect(onMove).toHaveBeenCalledWith("1", "f1");
   });
+
+  it("searches across the whole corpus when searchScope is provided", () => {
+    const inAnotherFolder: DocumentSummary = {
+      id: "3",
+      name: "presupuesto-cocina.pdf",
+      type: "pdf",
+      status: "ready",
+      chunk_count: 4,
+      folder_id: "f1",
+      created_at: "2026-07-24T00:00:00Z",
+    };
+    render(
+      <AdminDocumentTable
+        documents={documents}
+        onDelete={jest.fn()}
+        searchScope={[...documents, inAnotherFolder]}
+      />
+    );
+
+    expect(screen.queryByText("presupuesto-cocina.pdf")).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText(/buscar documentos por nombre/i), { target: { value: "presupuesto" } });
+    expect(screen.getByText("presupuesto-cocina.pdf")).toBeInTheDocument();
+    expect(screen.getByText(/buscando en todo el corpus/i)).toBeInTheDocument();
+  });
+
+  it("shows the search box even when the current folder is empty, if there's a search scope", () => {
+    render(<AdminDocumentTable documents={[]} onDelete={jest.fn()} searchScope={documents} />);
+    expect(screen.getByLabelText(/buscar documentos por nombre/i)).toBeInTheDocument();
+    expect(screen.getByText(/esta carpeta no tiene documentos/i)).toBeInTheDocument();
+  });
 });

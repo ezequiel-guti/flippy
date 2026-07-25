@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiGet, apiUpload, apiDelete, apiPost, apiPatch, ApiError } from "@/services/api";
 import type { DocumentSummary } from "@/types/document";
@@ -15,10 +15,9 @@ const POLL_INTERVAL_MS = 4000;
 
 export default function AdminPage() {
   const router = useRouter();
-  const [documents, setDocuments] = useState<DocumentSummary[]>([]);
+  const [allDocuments, setAllDocuments] = useState<DocumentSummary[]>([]);
   const [folders, setFolders] = useState<DocumentFolder[]>([]);
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
-  const [viewAll, setViewAll] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [folderError, setFolderError] = useState<string | null>(null);
@@ -30,11 +29,8 @@ export default function AdminPage() {
 
   async function loadDocuments() {
     try {
-      const path = viewAll
-        ? "/api/v1/admin/documents?all=true"
-        : `/api/v1/admin/documents${currentFolderId ? `?folder_id=${currentFolderId}` : ""}`;
-      const data = await apiGet<DocumentSummary[]>(path);
-      setDocuments(data);
+      const data = await apiGet<DocumentSummary[]>("/api/v1/admin/documents?all=true");
+      setAllDocuments(data);
       setError(null);
     } catch (err) {
       if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
@@ -54,12 +50,17 @@ export default function AdminPage() {
 
   useEffect(() => {
     loadDocuments();
-    const hasProcessing = documents.some((d) => d.status === "processing");
+    const hasProcessing = allDocuments.some((d) => d.status === "processing");
     if (!hasProcessing) return;
     const interval = setInterval(loadDocuments, POLL_INTERVAL_MS);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentFolderId, viewAll, documents.some((d) => d.status === "processing")]);
+  }, [allDocuments.some((d) => d.status === "processing")]);
+
+  const documentsInCurrentFolder = useMemo(
+    () => allDocuments.filter((d) => (d.folder_id ?? null) === currentFolderId),
+    [allDocuments, currentFolderId]
+  );
 
   async function handleUpload(file: File) {
     await apiUpload<DocumentSummary>(
@@ -71,7 +72,7 @@ export default function AdminPage() {
   }
 
   async function handleDelete(id: string) {
-    setDocuments((prev) => prev.filter((d) => d.id !== id));
+    setAllDocuments((prev) => prev.filter((d) => d.id !== id));
     try {
       await apiDelete(`/api/v1/admin/documents/${id}`);
     } catch {
@@ -128,51 +129,51 @@ export default function AdminPage() {
     : null;
 
   return (
-    <div className={styles.layout}>
-      <aside className={styles.sidebarPane}>
-        <AdminSidebar activeHref="/admin" />
-      </aside>
-      <AdminFolderPanel
-        folders={folders}
-        currentFolderId={currentFolderId}
-        onNavigate={setCurrentFolderId}
-        onCreate={handleCreateFolder}
-        onRename={handleRenameFolder}
-        onDelete={handleDeleteFolder}
-        error={folderError}
-      />
-      <main className={styles.mainPane}>
-        <h1 className={styles.title}>{currentFolderName ?? "Documentos"}</h1>
-        <p className={styles.subtitle}>Corpus documental de Flippy — PDF, Word, texto, JSON, HTML e imágenes.</p>
+    <div className={styles.page}>
+      <header className={styles.topbar}>
+        <h1 className={styles.topbarTitle}>Documentos</h1>
+        {currentFolderName && <span className={styles.topbarFolder}>{currentFolderName}</span>}
+      </header>
 
-        <AdminUploadForm
-          onUpload={handleUpload}
-          existingNames={documents.map((d) => d.name)}
-          currentFolderName={currentFolderName}
+      <div className={styles.layout}>
+        <aside className={styles.sidebarPane}>
+          <AdminSidebar activeHref="/admin" />
+        </aside>
+        <AdminFolderPanel
+          folders={folders}
+          currentFolderId={currentFolderId}
+          onNavigate={setCurrentFolderId}
+          onCreate={handleCreateFolder}
+          onRename={handleRenameFolder}
+          onDelete={handleDeleteFolder}
+          error={folderError}
         />
-
-        <label className={styles.viewAllToggle}>
-          <input type="checkbox" checked={viewAll} onChange={(e) => setViewAll(e.target.checked)} />
-          Ver todo el corpus (sin filtrar por carpeta)
-        </label>
-
-        {error && (
-          <p className={styles.error} role="alert">
-            {error}
-          </p>
-        )}
-
-        {isLoading ? (
-          <p className={styles.loading}>Cargando documentos…</p>
-        ) : (
-          <AdminDocumentTable
-            documents={documents}
-            onDelete={handleDelete}
-            folders={folders}
-            onMove={handleMoveDocument}
+        <main className={styles.mainPane}>
+          <AdminUploadForm
+            onUpload={handleUpload}
+            existingNames={allDocuments.map((d) => d.name)}
+            currentFolderName={currentFolderName}
           />
-        )}
-      </main>
+
+          {error && (
+            <p className={styles.error} role="alert">
+              {error}
+            </p>
+          )}
+
+          {isLoading ? (
+            <p className={styles.loading}>Cargando documentos…</p>
+          ) : (
+            <AdminDocumentTable
+              documents={documentsInCurrentFolder}
+              searchScope={allDocuments}
+              onDelete={handleDelete}
+              folders={folders}
+              onMove={handleMoveDocument}
+            />
+          )}
+        </main>
+      </div>
     </div>
   );
 }

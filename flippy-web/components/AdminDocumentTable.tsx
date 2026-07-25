@@ -29,6 +29,10 @@ interface AdminDocumentTableProps {
   onDelete: (id: string) => void;
   folders?: DocumentFolder[];
   onMove?: (documentId: string, folderId: string | null) => void;
+  /** Full corpus to search across when the query is non-empty — lets search
+   * reach documents outside the currently open folder instead of being
+   * limited to `documents` (the current folder's scope). */
+  searchScope?: DocumentSummary[];
 }
 
 const STATUS_LABEL: Record<DocumentSummary["status"], string> = {
@@ -39,15 +43,25 @@ const STATUS_LABEL: Record<DocumentSummary["status"], string> = {
 
 const PAGE_SIZE_OPTIONS = [10, 50, 100];
 
-export default function AdminDocumentTable({ documents, onDelete, folders = [], onMove }: AdminDocumentTableProps) {
+export default function AdminDocumentTable({
+  documents,
+  onDelete,
+  folders = [],
+  onMove,
+  searchScope,
+}: AdminDocumentTableProps) {
   const [query, setQuery] = useState("");
   const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[0]);
   const [page, setPage] = useState(1);
   const folderOptions = useMemo(() => buildFolderOptions(folders), [folders]);
 
+  const trimmedQuery = query.trim().toLowerCase();
+  const isSearchingEverywhere = trimmedQuery.length > 0 && !!searchScope;
+  const baseList = isSearchingEverywhere ? (searchScope as DocumentSummary[]) : documents;
+
   const filtered = useMemo(
-    () => documents.filter((doc) => doc.name.toLowerCase().includes(query.trim().toLowerCase())),
-    [documents, query]
+    () => baseList.filter((doc) => doc.name.toLowerCase().includes(trimmedQuery)),
+    [baseList, trimmedQuery]
   );
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
@@ -65,9 +79,7 @@ export default function AdminDocumentTable({ documents, onDelete, folders = [], 
     setPage(1);
   }
 
-  if (documents.length === 0) {
-    return <p className={styles.emptyState}>Todavía no hay documentos en el corpus.</p>;
-  }
+  const nothingToSearch = documents.length === 0 && !searchScope?.length;
 
   return (
     <div className={styles.wrapper}>
@@ -95,7 +107,7 @@ export default function AdminDocumentTable({ documents, onDelete, folders = [], 
           </svg>
           <input
             type="text"
-            placeholder="Buscar por nombre…"
+            placeholder={searchScope ? "Buscar en todas las carpetas…" : "Buscar por nombre…"}
             value={query}
             onChange={(e) => handleSearchChange(e.target.value)}
             aria-label="Buscar documentos por nombre"
@@ -103,8 +115,16 @@ export default function AdminDocumentTable({ documents, onDelete, folders = [], 
         </label>
       </div>
 
-      {pageItems.length === 0 ? (
-        <p className={styles.emptyState}>No encontramos documentos con ese nombre.</p>
+      {isSearchingEverywhere && (
+        <p className={styles.searchScopeNote}>Buscando en todo el corpus, no solo en esta carpeta.</p>
+      )}
+
+      {nothingToSearch ? (
+        <p className={styles.emptyState}>Todavía no hay documentos en el corpus.</p>
+      ) : pageItems.length === 0 ? (
+        <p className={styles.emptyState}>
+          {trimmedQuery ? "No encontramos documentos con ese nombre." : "Esta carpeta no tiene documentos."}
+        </p>
       ) : (
         <table className={styles.table}>
           <thead>
@@ -155,43 +175,44 @@ export default function AdminDocumentTable({ documents, onDelete, folders = [], 
         </table>
       )}
 
-      <div className={styles.footer}>
-        <span className={styles.showing}>
-          Mostrando {pageItems.length === 0 ? 0 : startIndex + 1}-{startIndex + pageItems.length} de{" "}
-          {filtered.length}
-        </span>
-        <div className={styles.pagination}>
-          <button
-            type="button"
-            className={styles.pageNavButton}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={safePage === 1}
-            aria-label="Página anterior"
-          >
-            ‹
-          </button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+      {!nothingToSearch && pageItems.length > 0 && (
+        <div className={styles.footer}>
+          <span className={styles.showing}>
+            Mostrando {startIndex + 1}-{startIndex + pageItems.length} de {filtered.length}
+          </span>
+          <div className={styles.pagination}>
             <button
-              key={p}
               type="button"
-              className={`${styles.pageButton} ${p === safePage ? styles.pageButtonActive : ""}`}
-              onClick={() => setPage(p)}
-              aria-current={p === safePage ? "page" : undefined}
+              className={styles.pageNavButton}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={safePage === 1}
+              aria-label="Página anterior"
             >
-              {p}
+              ‹
             </button>
-          ))}
-          <button
-            type="button"
-            className={styles.pageNavButton}
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={safePage === totalPages}
-            aria-label="Página siguiente"
-          >
-            ›
-          </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <button
+                key={p}
+                type="button"
+                className={`${styles.pageButton} ${p === safePage ? styles.pageButtonActive : ""}`}
+                onClick={() => setPage(p)}
+                aria-current={p === safePage ? "page" : undefined}
+              >
+                {p}
+              </button>
+            ))}
+            <button
+              type="button"
+              className={styles.pageNavButton}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={safePage === totalPages}
+              aria-label="Página siguiente"
+            >
+              ›
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

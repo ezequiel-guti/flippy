@@ -17,6 +17,27 @@ interface AdminFolderPanelProps {
 const CHEVRON_DOWN = "▾";
 const CHEVRON_RIGHT = "▸";
 
+function FolderIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="16" height="16" aria-hidden>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M3.5 7a1.5 1.5 0 0 1 1.5-1.5h4.4a1.5 1.5 0 0 1 1.2.6l1 1.4h7.9A1.5 1.5 0 0 1 21 9v8.5A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5V7z"
+      />
+    </svg>
+  );
+}
+
+function RootIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="16" height="16" aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 11.5 12 4l8 7.5" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6 10v8.5a1 1 0 0 0 1 1h3v-5h4v5h3a1 1 0 0 0 1-1V10" />
+    </svg>
+  );
+}
+
 export default function AdminFolderPanel({
   folders,
   currentFolderId,
@@ -124,8 +145,8 @@ export default function AdminFolderPanel({
             {hasChildren ? (isExpanded ? CHEVRON_DOWN : CHEVRON_RIGHT) : ""}
           </button>
           <button type="button" className={styles.nodeLabel} onClick={() => onNavigate(folder.id)}>
-            <span className={styles.folderIcon} aria-hidden>
-              📁
+            <span className={styles.folderIcon}>
+              <FolderIcon />
             </span>
             <span className={styles.folderName}>{folder.name}</span>
           </button>
@@ -172,8 +193,8 @@ export default function AdminFolderPanel({
             className={`${styles.node} ${styles.nodeLabel} ${currentFolderId === null ? styles.nodeActive : ""}`}
             onClick={() => onNavigate(null)}
           >
-            <span className={styles.folderIcon} aria-hidden>
-              🏠
+            <span className={styles.folderIcon}>
+              <RootIcon />
             </span>
             <span className={styles.folderName}>Raíz</span>
           </button>
