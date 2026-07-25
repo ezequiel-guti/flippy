@@ -132,19 +132,18 @@ export default function AdminPage() {
       <aside className={styles.sidebarPane}>
         <AdminSidebar activeHref="/admin" />
       </aside>
+      <AdminFolderPanel
+        folders={folders}
+        currentFolderId={currentFolderId}
+        onNavigate={setCurrentFolderId}
+        onCreate={handleCreateFolder}
+        onRename={handleRenameFolder}
+        onDelete={handleDeleteFolder}
+        error={folderError}
+      />
       <main className={styles.mainPane}>
-        <h1 className={styles.title}>Documentos</h1>
+        <h1 className={styles.title}>{currentFolderName ?? "Documentos"}</h1>
         <p className={styles.subtitle}>Corpus documental de Flippy — PDF, Word, texto, JSON, HTML e imágenes.</p>
-
-        <AdminFolderPanel
-          folders={folders}
-          currentFolderId={currentFolderId}
-          onNavigate={setCurrentFolderId}
-          onCreate={handleCreateFolder}
-          onRename={handleRenameFolder}
-          onDelete={handleDeleteFolder}
-          error={folderError}
-        />
 
         <AdminUploadForm
           onUpload={handleUpload}

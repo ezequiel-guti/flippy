@@ -23,7 +23,7 @@ describe("AdminFolderPanel", () => {
     expect(screen.queryByText("2026")).not.toBeInTheDocument();
   });
 
-  it("renders a breadcrumb reflecting the current folder's ancestry", () => {
+  it("auto-expands the ancestry chain of the current folder", () => {
     render(
       <AdminFolderPanel
         folders={folders}
@@ -37,6 +37,24 @@ describe("AdminFolderPanel", () => {
     expect(screen.getByText("Raíz")).toBeInTheDocument();
     expect(screen.getByText("Presupuestos")).toBeInTheDocument();
     expect(screen.getByText("2026")).toBeInTheDocument();
+  });
+
+  it("expands a folder's children via its chevron without navigating", () => {
+    const onNavigate = jest.fn();
+    render(
+      <AdminFolderPanel
+        folders={folders}
+        currentFolderId={null}
+        onNavigate={onNavigate}
+        onCreate={jest.fn()}
+        onRename={jest.fn()}
+        onDelete={jest.fn()}
+      />
+    );
+    expect(screen.queryByText("2026")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText(/expandir presupuestos/i));
+    expect(screen.getByText("2026")).toBeInTheDocument();
+    expect(onNavigate).not.toHaveBeenCalled();
   });
 
   it("navigates when a folder card is clicked", () => {

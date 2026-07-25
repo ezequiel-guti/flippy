@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { DocumentFolder } from "@/types/folder";
 import styles from "./AdminFolderPanel.module.css";
 
@@ -14,6 +14,9 @@ interface AdminFolderPanelProps {
   error?: string | null;
 }
 
+const CHEVRON_DOWN = "▾";
+const CHEVRON_RIGHT = "▸";
+
 export default function AdminFolderPanel({
   folders,
   currentFolderId,
@@ -23,30 +26,41 @@ export default function AdminFolderPanel({
   onDelete,
   error,
 }: AdminFolderPanelProps) {
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [isCreating, setIsCreating] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
 
   const byId = new Map(folders.map((f) => [f.id, f]));
-  const breadcrumb: DocumentFolder[] = [];
-  let cursor = currentFolderId ? byId.get(currentFolderId) : undefined;
-  while (cursor) {
-    breadcrumb.unshift(cursor);
-    cursor = cursor.parent_id ? byId.get(cursor.parent_id) : undefined;
+
+  // Auto-expand the ancestry chain of whichever folder is currently open, so
+  // navigating deep never leaves the tree looking collapsed around the selection.
+  useEffect(() => {
+    if (!currentFolderId) return;
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      let cursor = byId.get(currentFolderId);
+      while (cursor) {
+        next.add(cursor.id);
+        cursor = cursor.parent_id ? byId.get(cursor.parent_id) : undefined;
+      }
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentFolderId]);
+
+  function toggleExpanded(folderId: string) {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(folderId)) next.delete(folderId);
+      else next.add(folderId);
+      return next;
+    });
   }
 
-  const subfolders = folders
-    .filter((f) => f.parent_id === currentFolderId)
-    .sort((a, b) => a.name.localeCompare(b.name));
-
-  async function handleCreateSubmit(event: React.FormEvent) {
-    event.preventDefault();
-    const name = newFolderName.trim();
-    if (!name) return;
-    await onCreate(name, currentFolderId);
-    setNewFolderName("");
-    setIsCreating(false);
+  function childrenOf(parentId: string | null): DocumentFolder[] {
+    return folders.filter((f) => f.parent_id === parentId).sort((a, b) => a.name.localeCompare(b.name));
   }
 
   function startRename(folder: DocumentFolder) {
@@ -62,21 +76,88 @@ export default function AdminFolderPanel({
     setRenamingId(null);
   }
 
-  return (
-    <div className={styles.wrapper}>
-      <nav className={styles.breadcrumb} aria-label="Ubicación actual">
-        <button type="button" className={styles.breadcrumbItem} onClick={() => onNavigate(null)}>
-          Raíz
-        </button>
-        {breadcrumb.map((folder) => (
-          <span key={folder.id} className={styles.breadcrumbSegment}>
-            <span className={styles.breadcrumbSeparator}>/</span>
-            <button type="button" className={styles.breadcrumbItem} onClick={() => onNavigate(folder.id)}>
-              {folder.name}
+  async function handleCreateSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    const name = newFolderName.trim();
+    if (!name) return;
+    await onCreate(name, currentFolderId);
+    setExpandedIds((prev) => (currentFolderId ? new Set(prev).add(currentFolderId) : prev));
+    setNewFolderName("");
+    setIsCreating(false);
+  }
+
+  function renderNode(folder: DocumentFolder, depth: number) {
+    const kids = childrenOf(folder.id);
+    const hasChildren = kids.length > 0;
+    const isExpanded = expandedIds.has(folder.id);
+    const isActive = currentFolderId === folder.id;
+
+    if (renamingId === folder.id) {
+      return (
+        <li key={folder.id} style={{ paddingLeft: depth * 16 }}>
+          <form className={styles.renameForm} onSubmit={(e) => handleRenameSubmit(e, folder.id)}>
+            <input
+              autoFocus
+              className={styles.renameInput}
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              onBlur={() => setRenamingId(null)}
+            />
+          </form>
+        </li>
+      );
+    }
+
+    return (
+      <li key={folder.id}>
+        <div
+          className={`${styles.node} ${isActive ? styles.nodeActive : ""}`}
+          style={{ paddingLeft: 12 + depth * 16 }}
+        >
+          <button
+            type="button"
+            className={styles.chevron}
+            onClick={() => toggleExpanded(folder.id)}
+            aria-label={isExpanded ? `Contraer ${folder.name}` : `Expandir ${folder.name}`}
+            disabled={!hasChildren}
+          >
+            {hasChildren ? (isExpanded ? CHEVRON_DOWN : CHEVRON_RIGHT) : ""}
+          </button>
+          <button type="button" className={styles.nodeLabel} onClick={() => onNavigate(folder.id)}>
+            <span className={styles.folderIcon} aria-hidden>
+              📁
+            </span>
+            <span className={styles.folderName}>{folder.name}</span>
+          </button>
+          <div className={styles.nodeActions}>
+            <button
+              type="button"
+              className={styles.nodeActionButton}
+              onClick={() => startRename(folder)}
+              aria-label={`Renombrar ${folder.name}`}
+            >
+              ✎
             </button>
-          </span>
-        ))}
-      </nav>
+            <button
+              type="button"
+              className={styles.nodeActionButton}
+              onClick={() => onDelete(folder.id)}
+              aria-label={`Eliminar ${folder.name}`}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+        {hasChildren && isExpanded && <ul className={styles.tree}>{kids.map((kid) => renderNode(kid, depth + 1))}</ul>}
+      </li>
+    );
+  }
+
+  const rootFolders = childrenOf(null);
+
+  return (
+    <nav className={styles.wrapper} aria-label="Carpetas del corpus">
+      <span className={styles.heading}>Carpetas</span>
 
       {error && (
         <p className={styles.error} role="alert">
@@ -84,73 +165,38 @@ export default function AdminFolderPanel({
         </p>
       )}
 
-      <div className={styles.folderGrid}>
-        {subfolders.map((folder) =>
-          renamingId === folder.id ? (
-            <form
-              key={folder.id}
-              className={styles.folderCardEditing}
-              onSubmit={(e) => handleRenameSubmit(e, folder.id)}
-            >
-              <input
-                autoFocus
-                className={styles.renameInput}
-                value={renameValue}
-                onChange={(e) => setRenameValue(e.target.value)}
-                onBlur={() => setRenamingId(null)}
-              />
-            </form>
-          ) : (
-            <div key={folder.id} className={styles.folderCard}>
-              <button
-                type="button"
-                className={styles.folderCardButton}
-                onClick={() => onNavigate(folder.id)}
-              >
-                <span className={styles.folderIcon} aria-hidden>
-                  📁
-                </span>
-                <span className={styles.folderName}>{folder.name}</span>
-              </button>
-              <div className={styles.folderActions}>
-                <button
-                  type="button"
-                  className={styles.folderActionButton}
-                  onClick={() => startRename(folder)}
-                  aria-label={`Renombrar ${folder.name}`}
-                >
-                  ✎
-                </button>
-                <button
-                  type="button"
-                  className={styles.folderActionButton}
-                  onClick={() => onDelete(folder.id)}
-                  aria-label={`Eliminar ${folder.name}`}
-                >
-                  ✕
-                </button>
-              </div>
-            </div>
-          )
-        )}
-
-        {isCreating ? (
-          <form className={styles.folderCardEditing} onSubmit={handleCreateSubmit}>
-            <input
-              autoFocus
-              className={styles.renameInput}
-              placeholder="Nombre de la carpeta"
-              value={newFolderName}
-              onChange={(e) => setNewFolderName(e.target.value)}
-              onBlur={() => !newFolderName.trim() && setIsCreating(false)}
-            />
-          </form>
-        ) : (
-          <button type="button" className={styles.newFolderButton} onClick={() => setIsCreating(true)}>
-            + Nueva carpeta
+      <ul className={styles.tree}>
+        <li>
+          <button
+            type="button"
+            className={`${styles.node} ${styles.nodeLabel} ${currentFolderId === null ? styles.nodeActive : ""}`}
+            onClick={() => onNavigate(null)}
+          >
+            <span className={styles.folderIcon} aria-hidden>
+              🏠
+            </span>
+            <span className={styles.folderName}>Raíz</span>
           </button>
-        )}
-      </div>
-    </div>
+        </li>
+        {rootFolders.map((folder) => renderNode(folder, 0))}
+      </ul>
+
+      {isCreating ? (
+        <form className={styles.createForm} onSubmit={handleCreateSubmit}>
+          <input
+            autoFocus
+            className={styles.renameInput}
+            placeholder="Nombre de la carpeta"
+            value={newFolderName}
+            onChange={(e) => setNewFolderName(e.target.value)}
+            onBlur={() => !newFolderName.trim() && setIsCreating(false)}
+          />
+        </form>
+      ) : (
+        <button type="button" className={styles.newFolderButton} onClick={() => setIsCreating(true)}>
+          + Nueva carpeta
+        </button>
+      )}
+    </nav>
   );
 }
