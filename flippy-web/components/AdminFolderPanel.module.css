@@ -4,7 +4,7 @@
   gap: 10px;
   width: 220px;
   flex-shrink: 0;
-  background: var(--color-surface-alt);
+  background: var(--color-bg);
   border-right: 1px solid var(--color-line);
   padding: 20px 8px;
   height: 100%;
