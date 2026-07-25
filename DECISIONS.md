@@ -304,3 +304,13 @@ Racional: pedido explícito y literal del desarrollador — "mismo alto que el h
 Alternativas consideradas: ninguna — instrucción numérica directa, sin ambigüedad de diseño que arbitrar.
 Impacto: `AdminTopBar.module.css` — `.header` (`padding`, `align-items: center` en vez de `baseline` ya que ambos elementos quedan chicos y no necesitan alineación por línea base), `.title` (`font-size: 16px`), `.folder` (`font-size: var(--font-size-label)`). Sin cambios en `AdminTopBar.tsx` ni en los tests existentes — ajuste puramente de estilos. 57/57 tests Jest verdes, build de producción limpio.
 ════════════════════════════════════════════════════════
+
+════════════════════════════════════════════════════════
+📋 DECISIÓN — AdminTopBar vuelve a replicar ChatHeader completo, con logo (Incremento 12.9)
+════════════════════════════════════════════════════════
+Fecha: 2026-07-25
+Decisión: `AdminTopBar` deja de ser un `<h1>` + carpeta suelto y vuelve a la estructura completa de `ChatHeader` — escudo del logo + nombre + línea de estado con punto de color — pero con el texto adaptado al contexto de `/admin`: "Flippy" → "Documentos" (nombre), "Asistente · activo" → "Panel de administración" (estado por defecto) o "Carpeta: {nombre}" cuando hay una carpeta abierta (reemplaza al estado, no lo acompaña — mismo patrón de una sola línea de estado que ya usa `ChatHeader`).
+Racional: el desarrollador pidió explícitamente "igual que el header del chat con el ícono incluido" — instrucción directa de restaurar el logo que se había sacado en el Incremento 12.6 por un pedido anterior distinto ("sin el logo"). Los pedidos de diseño de esta sección fueron iterando (con logo → sin logo → con logo de nuevo); se prioriza siempre la instrucción más reciente del desarrollador sin cuestionar el ida y vuelta.
+Alternativas consideradas: ninguna — instrucción directa y explícita, sin ambigüedad de diseño que arbitrar.
+Impacto: `AdminTopBar.tsx` reescrito (vuelve el `<Image>` del logo + estructura `.identity`/`.name`/`.status`/`.dot`, ya no `<h1>` + `.folder` sueltos); `AdminTopBar.module.css` reescrito como réplica exacta de `ChatHeader.module.css` (mismos valores de padding/tamaños/colores, sin `.historyButton`). `AdminTopBar.test.tsx` actualizado al nuevo texto ("Documentos" + "Panel de administración" / "Carpeta: {nombre}"). 57/57 tests Jest verdes, build de producción limpio.
+════════════════════════════════════════════════════════

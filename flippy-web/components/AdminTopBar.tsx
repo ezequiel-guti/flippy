@@ -1,3 +1,4 @@
+import Image from "next/image";
 import styles from "./AdminTopBar.module.css";
 
 interface AdminTopBarProps {
@@ -7,8 +8,14 @@ interface AdminTopBarProps {
 export default function AdminTopBar({ currentFolderName }: AdminTopBarProps) {
   return (
     <header className={styles.header}>
-      <h1 className={styles.title}>Documentos</h1>
-      {currentFolderName && <span className={styles.folder}>{currentFolderName}</span>}
+      <Image src="/icons/logo-shield.png" alt="" width={26} height={31} className={styles.logo} />
+      <div className={styles.identity}>
+        <span className={styles.name}>Documentos</span>
+        <span className={styles.status}>
+          <span className={styles.dot} aria-hidden="true" />
+          {currentFolderName ? `Carpeta: ${currentFolderName}` : "Panel de administración"}
+        </span>
+      </div>
     </header>
   );
 }
