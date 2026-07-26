@@ -5,31 +5,60 @@ function openPanel() {
   fireEvent.click(screen.getByText("Subir archivo"));
 }
 
+function selectFiles(files: File[]) {
+  const input = screen.getByLabelText(/subir documentos al corpus/i) as HTMLInputElement;
+  fireEvent.change(input, { target: { files } });
+}
+
 describe("AdminUploadForm", () => {
-  it("uploads the file as soon as it's selected", async () => {
+  it("queues a selected file and uploads it only when the process button is clicked", async () => {
     const onUpload = jest.fn().mockResolvedValue(undefined);
     render(<AdminUploadForm onUpload={onUpload} />);
     openPanel();
 
     const file = new File(["contenido"], "documento.txt", { type: "text/plain" });
-    const input = screen.getByLabelText(/subir documentos al corpus/i) as HTMLInputElement;
-    fireEvent.change(input, { target: { files: [file] } });
+    selectFiles([file]);
 
+    expect(screen.getByText("documento.txt")).toBeInTheDocument();
+    expect(onUpload).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByText("Subir 1 archivo"));
     await waitFor(() => expect(onUpload).toHaveBeenCalledWith(file));
   });
 
-  it("uploads multiple files selected at once", async () => {
+  it("queues and uploads multiple files at once", async () => {
     const onUpload = jest.fn().mockResolvedValue(undefined);
     render(<AdminUploadForm onUpload={onUpload} />);
     openPanel();
 
     const file1 = new File(["a"], "uno.txt", { type: "text/plain" });
     const file2 = new File(["b"], "dos.txt", { type: "text/plain" });
-    const input = screen.getByLabelText(/subir documentos al corpus/i) as HTMLInputElement;
-    fireEvent.change(input, { target: { files: [file1, file2] } });
+    selectFiles([file1, file2]);
+
+    expect(screen.getByText("uno.txt")).toBeInTheDocument();
+    expect(screen.getByText("dos.txt")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Subir 2 archivos"));
 
     await waitFor(() => expect(onUpload).toHaveBeenCalledTimes(2));
     expect(onUpload).toHaveBeenCalledWith(file1);
+    expect(onUpload).toHaveBeenCalledWith(file2);
+  });
+
+  it("allows removing a queued file before uploading", async () => {
+    const onUpload = jest.fn().mockResolvedValue(undefined);
+    render(<AdminUploadForm onUpload={onUpload} />);
+    openPanel();
+
+    const file1 = new File(["a"], "uno.txt", { type: "text/plain" });
+    const file2 = new File(["b"], "dos.txt", { type: "text/plain" });
+    selectFiles([file1, file2]);
+
+    fireEvent.click(screen.getByLabelText("Quitar uno.txt"));
+    expect(screen.queryByText("uno.txt")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Subir 1 archivo"));
+    await waitFor(() => expect(onUpload).toHaveBeenCalledTimes(1));
     expect(onUpload).toHaveBeenCalledWith(file2);
   });
 
@@ -39,22 +68,22 @@ describe("AdminUploadForm", () => {
     openPanel();
 
     const file = new File(["contenido"], "documento.txt", { type: "text/plain" });
-    const input = screen.getByLabelText(/subir documentos al corpus/i) as HTMLInputElement;
-    fireEvent.change(input, { target: { files: [file] } });
+    selectFiles([file]);
+    fireEvent.click(screen.getByText("Subir 1 archivo"));
 
     await waitFor(() => expect(screen.getByText(/no pudimos subir/i)).toBeInTheDocument());
   });
 
-  it("warns and blocks upload when the file name already exists", () => {
+  it("warns and blocks queuing when the file name already exists", () => {
     const onUpload = jest.fn().mockResolvedValue(undefined);
     render(<AdminUploadForm onUpload={onUpload} existingNames={["documento.txt"]} />);
     openPanel();
 
     const file = new File(["contenido"], "documento.txt", { type: "text/plain" });
-    const input = screen.getByLabelText(/subir documentos al corpus/i) as HTMLInputElement;
-    fireEvent.change(input, { target: { files: [file] } });
+    selectFiles([file]);
 
     expect(screen.getByText(/ya existe un archivo/i)).toBeInTheDocument();
+    expect(screen.queryByText(/subir \d archivo/i)).not.toBeInTheDocument();
     expect(onUpload).not.toHaveBeenCalled();
   });
 
