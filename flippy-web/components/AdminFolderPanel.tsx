@@ -14,14 +14,28 @@ interface AdminFolderPanelProps {
   error?: string | null;
 }
 
-const CHEVRON_DOWN = "▾";
-const CHEVRON_RIGHT = "▸";
-
 function RootIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="16" height="16" aria-hidden>
       <path strokeLinecap="round" strokeLinejoin="round" d="M4 11.5 12 4l8 7.5" />
       <path strokeLinecap="round" strokeLinejoin="round" d="M6 10v8.5a1 1 0 0 0 1 1h3v-5h4v5h3a1 1 0 0 0 1-1V10" />
+    </svg>
+  );
+}
+
+function ChevronIcon({ expanded }: { expanded: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      width="14"
+      height="14"
+      aria-hidden
+      className={expanded ? styles.chevronIconExpanded : styles.chevronIcon}
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 6l6 6-6 6" />
     </svg>
   );
 }
@@ -148,7 +162,7 @@ export default function AdminFolderPanel({
             aria-label={isExpanded ? `Contraer ${folder.name}` : `Expandir ${folder.name}`}
             disabled={!hasChildren}
           >
-            {hasChildren ? (isExpanded ? CHEVRON_DOWN : CHEVRON_RIGHT) : ""}
+            {hasChildren && <ChevronIcon expanded={isExpanded} />}
           </button>
         </div>
         {hasChildren && isExpanded && (
@@ -162,8 +176,6 @@ export default function AdminFolderPanel({
 
   return (
     <nav className={styles.wrapper} aria-label="Carpetas del corpus">
-      <span className={styles.heading}>Carpetas</span>
-
       {error && (
         <p className={styles.error} role="alert">
           {error}
@@ -182,8 +194,8 @@ export default function AdminFolderPanel({
             </span>
             <span className={styles.folderName}>Raíz</span>
           </button>
+          {rootFolders.length > 0 && <ul className={styles.subtree}>{rootFolders.map((folder) => renderNode(folder))}</ul>}
         </li>
-        {rootFolders.map((folder) => renderNode(folder))}
       </ul>
 
       {isCreating ? (
