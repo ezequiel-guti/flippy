@@ -150,7 +150,9 @@ export default function AdminPage() {
             <AdminUploadForm
               onUpload={handleUpload}
               existingNames={allDocuments.map((d) => d.name)}
-              currentFolderName={currentFolderName}
+              folders={folders}
+              currentFolderId={currentFolderId}
+              onNavigate={setCurrentFolderId}
             />
 
             {error && (

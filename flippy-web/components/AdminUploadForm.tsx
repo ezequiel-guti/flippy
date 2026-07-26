@@ -1,87 +1,111 @@
 "use client";
 
 import { useRef, useState } from "react";
+import type { DocumentFolder } from "@/types/folder";
 import styles from "./AdminUploadForm.module.css";
 
 interface AdminUploadFormProps {
   onUpload: (file: File) => Promise<void>;
   existingNames?: string[];
-  currentFolderName?: string | null;
+  folders?: DocumentFolder[];
+  currentFolderId?: string | null;
+  onNavigate?: (folderId: string | null) => void;
 }
 
 const ACCEPTED_EXTENSIONS = ".pdf,.docx,.txt,.json,.html,.jpg,.jpeg,.png";
 
-export default function AdminUploadForm({ onUpload, existingNames = [], currentFolderName }: AdminUploadFormProps) {
+function ancestorChain(folders: DocumentFolder[], currentFolderId: string | null): DocumentFolder[] {
+  const byId = new Map(folders.map((f) => [f.id, f]));
+  const chain: DocumentFolder[] = [];
+  let cursor = currentFolderId ? byId.get(currentFolderId) : undefined;
+  while (cursor) {
+    chain.unshift(cursor);
+    cursor = cursor.parent_id ? byId.get(cursor.parent_id) : undefined;
+  }
+  return chain;
+}
+
+export default function AdminUploadForm({
+  onUpload,
+  existingNames = [],
+  folders = [],
+  currentFolderId = null,
+  onNavigate,
+}: AdminUploadFormProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [duplicateName, setDuplicateName] = useState<string | null>(null);
-  const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  function handleFileChange() {
-    const file = fileInputRef.current?.files?.[0];
-    setError(null);
-    setSelectedFileName(file?.name ?? null);
-    if (file && existingNames.includes(file.name)) {
-      setDuplicateName(file.name);
-    } else {
-      setDuplicateName(null);
-    }
-  }
+  const chain = ancestorChain(folders, currentFolderId);
 
-  async function handleSubmit(event: React.FormEvent) {
-    event.preventDefault();
+  async function handleFileChange() {
     const file = fileInputRef.current?.files?.[0];
     if (!file) return;
+    setError(null);
+
     if (existingNames.includes(file.name)) {
       setDuplicateName(file.name);
+      if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
 
-    setError(null);
+    setDuplicateName(null);
     setIsUploading(true);
     try {
       await onUpload(file);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      setSelectedFileName(null);
-      setDuplicateName(null);
     } catch {
       setError("No pudimos subir el archivo. Intentá de nuevo.");
     } finally {
       setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }
 
   return (
-    <form className={styles.form} onSubmit={handleSubmit}>
-      <div className={styles.field}>
-        <span className={styles.fieldLabel}>
-          Subir documento {currentFolderName ? `a "${currentFolderName}"` : "a la raíz del corpus"}
-        </span>
-        <div className={styles.picker}>
-          <button
-            type="button"
-            className={styles.chooseButton}
-            disabled={isUploading}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            Elegir archivo
-          </button>
-          <span className={styles.fileName}>{selectedFileName ?? "Ningún archivo seleccionado"}</span>
-          <input
-            type="file"
-            accept={ACCEPTED_EXTENSIONS}
-            ref={fileInputRef}
-            disabled={isUploading}
-            onChange={handleFileChange}
-            className={styles.hiddenInput}
-            aria-label="Subir documento al corpus"
-          />
-        </div>
+    <div className={styles.bar}>
+      <nav className={styles.breadcrumb} aria-label="Ubicación actual">
+        <button type="button" className={styles.breadcrumbRoot} onClick={() => onNavigate?.(null)}>
+          Raíz
+        </button>
+        <span className={styles.breadcrumbSep}>/</span>
+        {chain.map((folder, index) => {
+          const isLast = index === chain.length - 1;
+          return (
+            <span key={folder.id} className={styles.breadcrumbSegment}>
+              {isLast ? (
+                <span className={styles.breadcrumbCurrent}>{folder.name}</span>
+              ) : (
+                <button type="button" className={styles.breadcrumbLink} onClick={() => onNavigate?.(folder.id)}>
+                  {folder.name}
+                </button>
+              )}
+              <span className={styles.breadcrumbSep}>/</span>
+            </span>
+          );
+        })}
+      </nav>
+
+      <div className={styles.actions}>
+        <button
+          type="button"
+          className={styles.addButton}
+          disabled={isUploading}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          {isUploading ? "Subiendo…" : "Agregar archivo"}
+        </button>
+        <input
+          type="file"
+          accept={ACCEPTED_EXTENSIONS}
+          ref={fileInputRef}
+          disabled={isUploading}
+          onChange={handleFileChange}
+          className={styles.hiddenInput}
+          aria-label="Subir documento al corpus"
+        />
       </div>
-      <button type="submit" className={styles.submit} disabled={isUploading || !!duplicateName}>
-        {isUploading ? "Subiendo…" : "Subir"}
-      </button>
+
       {duplicateName && (
         <p className={styles.warning} role="alert">
           Ya existe un archivo llamado &quot;{duplicateName}&quot; en el corpus. Eliminalo primero si querés
@@ -93,6 +117,6 @@ export default function AdminUploadForm({ onUpload, existingNames = [], currentF
           {error}
         </p>
       )}
-    </form>
+    </div>
   );
 }
