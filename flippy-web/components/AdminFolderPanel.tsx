@@ -17,18 +17,6 @@ interface AdminFolderPanelProps {
 const CHEVRON_DOWN = "▾";
 const CHEVRON_RIGHT = "▸";
 
-function FolderIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="16" height="16" aria-hidden>
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M3.5 7a1.5 1.5 0 0 1 1.5-1.5h4.4a1.5 1.5 0 0 1 1.2.6l1 1.4h7.9A1.5 1.5 0 0 1 21 9v8.5A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5V7z"
-      />
-    </svg>
-  );
-}
-
 function RootIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="16" height="16" aria-hidden>
@@ -107,7 +95,7 @@ export default function AdminFolderPanel({
     setIsCreating(false);
   }
 
-  function renderNode(folder: DocumentFolder, depth: number) {
+  function renderNode(folder: DocumentFolder) {
     const kids = childrenOf(folder.id);
     const hasChildren = kids.length > 0;
     const isExpanded = expandedIds.has(folder.id);
@@ -115,7 +103,7 @@ export default function AdminFolderPanel({
 
     if (renamingId === folder.id) {
       return (
-        <li key={folder.id} style={{ marginLeft: depth === 0 ? 0 : 18 }}>
+        <li key={folder.id}>
           <form className={styles.renameForm} onSubmit={(e) => handleRenameSubmit(e, folder.id)}>
             <input
               autoFocus
@@ -130,24 +118,10 @@ export default function AdminFolderPanel({
     }
 
     return (
-      <li key={folder.id} style={{ marginLeft: depth * 18 }}>
+      <li key={folder.id}>
         <div className={`${styles.node} ${isActive ? styles.nodeActive : ""}`}>
-          <button
-            type="button"
-            className={styles.chevron}
-            onClick={() => toggleExpanded(folder.id)}
-            aria-label={isExpanded ? `Contraer ${folder.name}` : `Expandir ${folder.name}`}
-            disabled={!hasChildren}
-          >
-            {hasChildren ? (isExpanded ? CHEVRON_DOWN : CHEVRON_RIGHT) : ""}
-          </button>
           <button type="button" className={styles.nodeLabel} onClick={() => onNavigate(folder.id)}>
-            <span className={styles.folderIcon}>
-              <FolderIcon />
-            </span>
-            <span className={`${styles.folderName} ${depth === 0 ? styles.folderNameTopLevel : ""}`}>
-              {folder.name}
-            </span>
+            <span className={styles.folderName}>{folder.name}</span>
           </button>
           <div className={styles.nodeActions}>
             <button
@@ -167,9 +141,19 @@ export default function AdminFolderPanel({
               ✕
             </button>
           </div>
-          <span className={styles.statusDot} aria-hidden />
+          <button
+            type="button"
+            className={styles.chevron}
+            onClick={() => toggleExpanded(folder.id)}
+            aria-label={isExpanded ? `Contraer ${folder.name}` : `Expandir ${folder.name}`}
+            disabled={!hasChildren}
+          >
+            {hasChildren ? (isExpanded ? CHEVRON_DOWN : CHEVRON_RIGHT) : ""}
+          </button>
         </div>
-        {hasChildren && isExpanded && <ul className={styles.tree}>{kids.map((kid) => renderNode(kid, depth + 1))}</ul>}
+        {hasChildren && isExpanded && (
+          <ul className={styles.subtree}>{kids.map((kid) => renderNode(kid))}</ul>
+        )}
       </li>
     );
   }
@@ -199,7 +183,7 @@ export default function AdminFolderPanel({
             <span className={styles.folderName}>Raíz</span>
           </button>
         </li>
-        {rootFolders.map((folder) => renderNode(folder, 0))}
+        {rootFolders.map((folder) => renderNode(folder))}
       </ul>
 
       {isCreating ? (
