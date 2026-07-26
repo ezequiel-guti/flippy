@@ -10,6 +10,7 @@ interface AdminUploadFormProps {
   folders?: DocumentFolder[];
   currentFolderId?: string | null;
   onNavigate?: (folderId: string | null) => void;
+  onPanelOpenChange?: (isOpen: boolean) => void;
 }
 
 interface QueuedFile {
@@ -49,6 +50,7 @@ export default function AdminUploadForm({
   folders = [],
   currentFolderId = null,
   onNavigate,
+  onPanelOpenChange,
 }: AdminUploadFormProps) {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -60,6 +62,11 @@ export default function AdminUploadForm({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const chain = ancestorChain(folders, currentFolderId);
+
+  function updatePanelOpen(isOpen: boolean) {
+    setIsPanelOpen(isOpen);
+    onPanelOpenChange?.(isOpen);
+  }
 
   function addFiles(fileList: FileList | File[]) {
     const files = Array.from(fileList);
@@ -110,7 +117,7 @@ export default function AdminUploadForm({
     if (failed.length > 0) {
       setError("No pudimos subir uno o más archivos. Intentá de nuevo.");
     } else {
-      setIsPanelOpen(false);
+      updatePanelOpen(false);
     }
   }
 
@@ -160,7 +167,7 @@ export default function AdminUploadForm({
         </nav>
 
         <div className={styles.actions}>
-          <button type="button" className={styles.addButton} onClick={() => setIsPanelOpen((open) => !open)}>
+          <button type="button" className={styles.addButton} onClick={() => updatePanelOpen(!isPanelOpen)}>
             Subir archivo
           </button>
         </div>

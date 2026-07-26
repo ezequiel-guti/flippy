@@ -22,6 +22,7 @@ export default function AdminPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [folderError, setFolderError] = useState<string | null>(null);
+  const [isUploadPanelOpen, setIsUploadPanelOpen] = useState(false);
 
   async function loadFolders() {
     const data = await apiGet<DocumentFolder[]>("/api/v1/admin/folders");
@@ -153,6 +154,7 @@ export default function AdminPage() {
               folders={folders}
               currentFolderId={currentFolderId}
               onNavigate={setCurrentFolderId}
+              onPanelOpenChange={setIsUploadPanelOpen}
             />
 
             {error && (
@@ -161,17 +163,18 @@ export default function AdminPage() {
               </p>
             )}
 
-            {isLoading ? (
-              <p className={styles.loading}>Cargando documentos…</p>
-            ) : (
-              <AdminDocumentTable
-                documents={documentsInCurrentFolder}
-                searchScope={allDocuments}
-                onDelete={handleDelete}
-                folders={folders}
-                onMove={handleMoveDocument}
-              />
-            )}
+            {!isUploadPanelOpen &&
+              (isLoading ? (
+                <p className={styles.loading}>Cargando documentos…</p>
+              ) : (
+                <AdminDocumentTable
+                  documents={documentsInCurrentFolder}
+                  searchScope={allDocuments}
+                  onDelete={handleDelete}
+                  folders={folders}
+                  onMove={handleMoveDocument}
+                />
+              ))}
           </main>
         </div>
       </div>
