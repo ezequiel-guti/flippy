@@ -62,17 +62,16 @@
 .addButton {
   font-family: var(--font-secondary);
   font-size: var(--font-size-label);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-white);
-  background: var(--color-primary);
-  border: none;
-  border-radius: var(--border-radius-md);
-  padding: 8px 16px;
+  color: var(--color-primary);
+  background: transparent;
+  border: 1px dashed var(--color-primary);
+  border-radius: var(--border-radius-sm);
+  padding: 8px 10px;
   cursor: pointer;
 }
 
 .addButton:hover:not(:disabled) {
-  background: var(--color-primary-hover);
+  background: rgba(139, 46, 59, 0.06);
 }
 
 .addButton:disabled {

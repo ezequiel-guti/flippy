@@ -93,7 +93,7 @@ export default function AdminUploadForm({
           disabled={isUploading}
           onClick={() => fileInputRef.current?.click()}
         >
-          {isUploading ? "Subiendo…" : "Agregar archivo"}
+          {isUploading ? "Subiendo…" : "Subir archivo"}
         </button>
         <input
           type="file"
