@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { DocumentFolder } from "@/types/folder";
 import styles from "./AdminUploadForm.module.css";
 
@@ -67,6 +67,17 @@ export default function AdminUploadForm({
     setIsPanelOpen(isOpen);
     onPanelOpenChange?.(isOpen);
   }
+
+  // Navigating to a different folder makes the pending queue's destination stale
+  // (uploads target whatever folder is current at upload time) — close the panel
+  // and drop the queue so the documents table for the new folder is visible.
+  useEffect(() => {
+    updatePanelOpen(false);
+    setPendingFiles([]);
+    setDuplicateNames([]);
+    setError(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentFolderId]);
 
   function addFiles(fileList: FileList | File[]) {
     const files = Array.from(fileList);
@@ -175,6 +186,17 @@ export default function AdminUploadForm({
 
       {isPanelOpen && (
         <>
+          <div className={styles.panelHeader}>
+            <span className={styles.panelTitle}>Subir archivos</span>
+            <button
+              type="button"
+              className={styles.panelClose}
+              onClick={() => updatePanelOpen(false)}
+              aria-label="Cerrar subida de archivos"
+            >
+              ✕
+            </button>
+          </div>
           <div
             className={`${styles.dropzone} ${isDragging ? styles.dropzoneDragging : ""}`}
             onDragOver={(event) => {

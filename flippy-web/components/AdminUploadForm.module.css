@@ -85,6 +85,34 @@
   cursor: not-allowed;
 }
 
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.panelTitle {
+  font-family: var(--font-secondary);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
+}
+
+.panelClose {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+
+.panelClose:hover {
+  background: rgba(43, 43, 45, 0.1);
+  color: var(--color-text-primary);
+}
+
 .dropzone {
   display: flex;
   flex-direction: column;

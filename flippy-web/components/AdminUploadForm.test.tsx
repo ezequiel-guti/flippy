@@ -87,6 +87,38 @@ describe("AdminUploadForm", () => {
     expect(onUpload).not.toHaveBeenCalled();
   });
 
+  it("closes the panel via the close button", () => {
+    const onUpload = jest.fn().mockResolvedValue(undefined);
+    const onPanelOpenChange = jest.fn();
+    render(<AdminUploadForm onUpload={onUpload} onPanelOpenChange={onPanelOpenChange} />);
+    openPanel();
+
+    expect(screen.getByText("Subir archivos")).toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText("Cerrar subida de archivos"));
+
+    expect(screen.queryByText("Subir archivos")).not.toBeInTheDocument();
+    expect(onPanelOpenChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it("closes the panel and clears the queue when navigating to a different folder", () => {
+    const onUpload = jest.fn().mockResolvedValue(undefined);
+    const onPanelOpenChange = jest.fn();
+    const { rerender } = render(
+      <AdminUploadForm onUpload={onUpload} onPanelOpenChange={onPanelOpenChange} currentFolderId={null} />
+    );
+    openPanel();
+
+    const file = new File(["contenido"], "documento.txt", { type: "text/plain" });
+    selectFiles([file]);
+    expect(screen.getByText("documento.txt")).toBeInTheDocument();
+
+    rerender(<AdminUploadForm onUpload={onUpload} onPanelOpenChange={onPanelOpenChange} currentFolderId="f1" />);
+
+    expect(screen.queryByText("Subir archivos")).not.toBeInTheDocument();
+    expect(screen.queryByText("documento.txt")).not.toBeInTheDocument();
+    expect(onPanelOpenChange).toHaveBeenLastCalledWith(false);
+  });
+
   it("shows the folder path as a breadcrumb and navigates on click", () => {
     const onUpload = jest.fn().mockResolvedValue(undefined);
     const onNavigate = jest.fn();
