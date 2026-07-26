@@ -1,3 +1,9 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .bar {
   display: flex;
   align-items: center;
@@ -64,7 +70,7 @@
   font-size: var(--font-size-label);
   color: var(--color-primary);
   background: transparent;
-  border: 1px dashed var(--color-primary);
+  border: 1px solid var(--color-primary);
   border-radius: var(--border-radius-sm);
   padding: 8px 10px;
   cursor: pointer;
@@ -77,6 +83,62 @@
 .addButton:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--border-radius-md);
+  background: var(--color-white);
+  padding: 48px 24px;
+  text-align: center;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.dropzoneDragging {
+  border-color: var(--color-primary);
+  background: var(--color-primary-tint);
+}
+
+.dropzoneIcon {
+  color: var(--color-text-secondary);
+}
+
+.dropzoneText {
+  font-family: var(--font-secondary);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.dropzoneSub {
+  font-family: var(--font-secondary);
+  font-size: var(--font-size-label);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.chooseLink {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-primary);
+  cursor: pointer;
+  text-decoration: underline;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.progress {
+  font-family: var(--font-secondary);
+  font-size: var(--font-size-label);
+  color: var(--color-text-secondary);
+  margin-top: 8px;
 }
 
 .hiddenInput {
