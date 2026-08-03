@@ -9,16 +9,21 @@ from docx import Document as DocxDocument
 
 def extract_text(content: bytes, doc_type: str) -> str:
     if doc_type == "pdf":
-        return _extract_pdf(content)
-    if doc_type == "docx":
-        return _extract_docx(content)
-    if doc_type == "txt":
-        return content.decode("utf-8", errors="replace")
-    if doc_type == "json":
-        return _extract_json(content)
-    if doc_type == "html":
-        return _extract_html(content)
-    raise ValueError(f"Unsupported document type for text extraction: {doc_type}")
+        text = _extract_pdf(content)
+    elif doc_type == "docx":
+        text = _extract_docx(content)
+    elif doc_type == "txt":
+        text = content.decode("utf-8", errors="replace")
+    elif doc_type == "json":
+        text = _extract_json(content)
+    elif doc_type == "html":
+        text = _extract_html(content)
+    else:
+        raise ValueError(f"Unsupported document type for text extraction: {doc_type}")
+
+    # Postgres text columns reject NUL (0x00) — some PDFs/exports embed it; strip
+    # it here so it never reaches the document_chunks insert.
+    return text.replace("\x00", "")
 
 
 def _extract_pdf(content: bytes) -> str:

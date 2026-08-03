@@ -434,3 +434,23 @@ Racional: al investigar por qué un documento real (`ddcb7017-...`) había queda
 Alternativas consideradas: solo mejorar el logging del lado del servidor sin persistir en la base (descartado — depende de tener acceso a los logs de Railway en el momento exacto, que es justamente lo que faltó esta vez); agregar reintentos automáticos en vez de (o adicionalmente a) visibilidad del error (descartado por ahora — el desarrollador priorizó saber qué pasó antes que evitarlo automáticamente; queda como mejora futura posible).
 Impacto: `supabase/migrations/0008_document_error_detail.sql`. `documents/services.py` — `process_document` (guarda/limpia error_detail en los 4 caminos de retorno), `prepare_reprocess` (lo limpia al reiniciar), `list_documents`/`move_document` (lo devuelven). `documents/model.py` — `DocumentResponse.error_detail: str | None = None`. Frontend: `types/document.ts`, tooltip en `AdminDocumentTable.tsx`, `handleReprocess` en `admin/page.tsx` lo propaga en la actualización optimista. 1 test pytest nuevo (14/14 en `test_documents.py`) y 1 test Jest nuevo (12/12 en `AdminDocumentTable.test.tsx`), build de producción limpio.
 ════════════════════════════════════════════════════════
+
+════════════════════════════════════════════════════════
+📋 DECISIÓN — extract_text elimina bytes NUL antes de tocar Postgres (Incremento 14.2)
+════════════════════════════════════════════════════════
+Fecha: 2026-08-03
+Decisión: `extract_text` en `parsers.py` centraliza `text.replace("\x00", "")` sobre el resultado de los 5 extractores (pdf/docx/txt/json/html) antes de devolver el texto, en vez de sanitizar en cada extractor por separado.
+Racional: con `error_detail` ya persistiendo el motivo real de un fallo (Incremento 14, desbloqueado por el fix 14.1), el desarrollador reportó que reprocesar seguía fallando — el mensaje guardado mostró `A string literal cannot contain NUL (0x00) characters.` Postgres rechaza el byte NUL en columnas `text`; algunos PDFs (como el real que motivó toda esta investigación) lo embeben en su contenido, y pdfplumber lo preserva tal cual al extraer texto.
+Alternativas consideradas: sanitizar en `chunk_text` en vez de en `extract_text` (descartado — el problema es del texto crudo, no del chunking; sanitizar en el extractor es más cercano a la fuente y cubre cualquier consumidor futuro de `extract_text`); sanitizar solo en `_extract_pdf` ya que es el caso conocido (descartado — docx/html/json también pueden traer bytes de control embebidos de fuentes externas, más barato cubrir los 5 tipos de una vez que esperar el próximo caso).
+Impacto: `parsers.py` — `extract_text` pasa de un dispatch con `return` directo por tipo a asignar `text` y sanitizar antes del `return` final. Nuevo `tests/test_parsers.py` (1 test, sanitización vía el camino `txt`, determinístico). Verificado además contra el PDF real del caso original: el texto extraído ya no contiene `\x00`.
+════════════════════════════════════════════════════════
+
+════════════════════════════════════════════════════════
+📋 DECISIÓN — apply_migrations.py lee variables de entorno del proceso, no solo .env (Incremento 14.1)
+════════════════════════════════════════════════════════
+Fecha: 2026-08-03
+Decisión: `env = {**os.environ, **dotenv_values(".env")}` en vez de `env = dotenv_values(".env")` — el proceso environment tiene prioridad base, el archivo `.env` local sobreescribe para desarrollo si existe.
+Racional: el desarrollador reportó CORS bloqueado en `/admin`; la investigación llevó a un 500 real (`UndefinedColumn: error_detail`) porque la migración 0008 nunca llegó a la base que usa Railway en producción. Causa raíz: `apply_migrations.py` solo leía un archivo `.env` literal vía `dotenv_values()`; Railway inyecta variables de entorno directo al proceso (sin archivo `.env`), así que correr el script desde la Console de Railway fallaba con "SUPABASE_DB_URL is not set in .env" — la migración nunca pudo aplicarse ahí hasta este fix.
+Alternativas consideradas: pedirle al desarrollador que cree un `.env` manual en el filesystem efímero de la Console de Railway antes de cada migración (descartado — hay que repetirlo en cada sesión de Console, frágil y nada ergonómico); usar solo `os.environ` sin fallback a `.env` (descartado — rompería el flujo de desarrollo local existente, que depende de `.env`).
+Impacto: `flippy-api/scripts/apply_migrations.py`. Sin tests nuevos (script operativo, no cubierto por la suite pytest existente). Verificado localmente (sigue aplicando las 8 migraciones contra `.env`) y en Railway (el desarrollador corrió el script desde la Console tras el redeploy y confirmó que el 500 desapareció).
+════════════════════════════════════════════════════════
