@@ -23,6 +23,7 @@ export default function AdminPage() {
   const [error, setError] = useState<string | null>(null);
   const [folderError, setFolderError] = useState<string | null>(null);
   const [isUploadPanelOpen, setIsUploadPanelOpen] = useState(false);
+  const [reprocessingIds, setReprocessingIds] = useState<Set<string>>(new Set());
 
   async function loadFolders() {
     const data = await apiGet<DocumentFolder[]>("/api/v1/admin/folders");
@@ -84,11 +85,20 @@ export default function AdminPage() {
   }
 
   async function handleReprocess(id: string) {
+    setReprocessingIds((prev) => new Set(prev).add(id));
     try {
-      await apiPost(`/api/v1/admin/documents/${id}/reprocess`, {});
-      await loadDocuments();
+      const updated = await apiPost<DocumentSummary>(`/api/v1/admin/documents/${id}/reprocess`, {});
+      setAllDocuments((prev) =>
+        prev.map((d) => (d.id === id ? { ...d, status: updated.status, chunk_count: updated.chunk_count } : d))
+      );
     } catch {
       setError("No pudimos reprocesar el documento. Refrescá la página.");
+    } finally {
+      setReprocessingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     }
   }
 
@@ -181,6 +191,7 @@ export default function AdminPage() {
                   searchScope={allDocuments}
                   onDelete={handleDelete}
                   onReprocess={handleReprocess}
+                  reprocessingIds={reprocessingIds}
                   folders={folders}
                   onMove={handleMoveDocument}
                 />

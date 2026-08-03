@@ -51,6 +51,26 @@ describe("AdminDocumentTable", () => {
     expect(onReprocess).toHaveBeenCalledWith("1");
   });
 
+  it("disables the reprocess button while the document is processing", () => {
+    render(<AdminDocumentTable documents={documents} onDelete={jest.fn()} onReprocess={jest.fn()} />);
+    expect(screen.getByLabelText(/reprocesar notas.txt/i)).toBeDisabled();
+    expect(screen.getByLabelText(/reprocesar manual.pdf/i)).not.toBeDisabled();
+  });
+
+  it("shows a spinner and disables the button while reprocessing is in flight", () => {
+    render(
+      <AdminDocumentTable
+        documents={documents}
+        onDelete={jest.fn()}
+        onReprocess={jest.fn()}
+        reprocessingIds={new Set(["1"])}
+      />
+    );
+    const button = screen.getByLabelText(/reprocesar manual.pdf/i);
+    expect(button).toBeDisabled();
+    expect(button.querySelector('[aria-hidden="true"]')).toBeInTheDocument();
+  });
+
   it("filters documents by name", () => {
     render(<AdminDocumentTable documents={documents} onDelete={jest.fn()} onReprocess={jest.fn()} />);
     fireEvent.change(screen.getByLabelText(/buscar documentos por nombre/i), { target: { value: "notas" } });
