@@ -1,4 +1,5 @@
 import json
+import re
 import uuid
 
 from psycopg2.extras import Json
@@ -23,6 +24,13 @@ CONTENT_TYPES = {
 }
 
 
+def _sanitize_filename(name: str) -> str:
+    """Strips path separators and traversal sequences so storage_path can't escape
+    the document's own doc_id/ prefix in the Supabase Storage bucket."""
+    base = name.rsplit("/", 1)[-1].rsplit("\\", 1)[-1]
+    return re.sub(r"[^A-Za-z0-9._-]", "_", base) or "archivo"
+
+
 class DocumentsService:
     @staticmethod
     def create_document(name: str, doc_type: str, content: bytes, folder_id: str | None = None) -> dict:
@@ -30,7 +38,7 @@ class DocumentsService:
             raise ValueError(f"Unsupported document type: {doc_type}")
 
         doc_id = str(uuid.uuid4())
-        storage_path = f"{doc_id}/{name}"
+        storage_path = f"{doc_id}/{_sanitize_filename(name)}"
 
         supabase_storage.ensure_bucket_exists()
         supabase_storage.upload_file(storage_path, content, CONTENT_TYPES[doc_type])
@@ -96,6 +104,43 @@ class DocumentsService:
             raise
         finally:
             conn.close()
+
+    @staticmethod
+    def prepare_reprocess(doc_id: str) -> dict | None:
+        """Downloads the stored file, then resets status/chunks — order matters: a failed
+        download must never leave the document stuck in 'processing' with no chunks."""
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "select storage_path, type, name, folder_id from documents where id = %s", (doc_id,)
+                )
+                row = cur.fetchone()
+                if not row:
+                    return None
+                storage_path, doc_type, name, folder_id = row
+        finally:
+            conn.close()
+
+        content = supabase_storage.download_file(storage_path)
+
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("delete from document_chunks where document_id = %s", (doc_id,))
+                cur.execute(
+                    "update documents set status = 'processing', chunk_count = 0 where id = %s", (doc_id,)
+                )
+            conn.commit()
+        finally:
+            conn.close()
+
+        return {
+            "name": name,
+            "type": doc_type,
+            "folder_id": str(folder_id) if folder_id else None,
+            "content": content,
+        }
 
     @staticmethod
     def list_documents(folder_id: str | None = None, filter_by_folder: bool = False) -> list[dict]:

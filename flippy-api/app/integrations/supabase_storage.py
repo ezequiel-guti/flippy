@@ -59,6 +59,16 @@ def upload_file(path: str, content: bytes, content_type: str, bucket: str = BUCK
     _raise_for_error(response)
 
 
+def download_file(path: str, bucket: str = BUCKET) -> bytes:
+    response = httpx.get(
+        f"{settings.supabase_url}/storage/v1/object/{bucket}/{path}",
+        headers=_headers(),
+        timeout=30,
+    )
+    _raise_for_error(response)
+    return response.content
+
+
 def delete_file(path: str, bucket: str = BUCKET) -> None:
     response = httpx.request(
         "DELETE",

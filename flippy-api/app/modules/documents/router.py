@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
 
 from app.core.security import TokenData, require_admin
+from app.integrations.supabase_storage import SupabaseStorageError
 
 from .model import (
     DocumentMoveRequest,
@@ -69,6 +70,34 @@ def list_documents(
     if all:
         return DocumentsService.list_documents()
     return DocumentsService.list_documents(folder_id=folder_id, filter_by_folder=True)
+
+
+@router.post("/{document_id}/reprocess", response_model=DocumentResponse)
+def reprocess_document(
+    document_id: str,
+    background_tasks: BackgroundTasks,
+    _admin: TokenData = Depends(require_admin),
+):
+    try:
+        prepared = DocumentsService.prepare_reprocess(document_id)
+    except SupabaseStorageError:
+        raise HTTPException(status_code=502, detail="No pudimos leer el archivo original desde el storage")
+    if not prepared:
+        raise HTTPException(status_code=404, detail="Documento no encontrado")
+
+    background_tasks.add_task(
+        DocumentsService.process_document, document_id, prepared["content"], prepared["type"]
+    )
+
+    return {
+        "id": document_id,
+        "name": prepared["name"],
+        "type": prepared["type"],
+        "status": "processing",
+        "chunk_count": 0,
+        "folder_id": prepared["folder_id"],
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
 
 
 @router.delete("/{document_id}")

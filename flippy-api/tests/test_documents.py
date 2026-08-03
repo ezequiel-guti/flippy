@@ -107,6 +107,75 @@ def auth_headers(admin_token):
     return {"Authorization": f"Bearer {admin_token}"}
 
 
+def test_upload_sanitizes_traversal_in_filename(auth_headers):
+    content = b"contenido con nombre de archivo malicioso"
+    response = client.post(
+        "/api/v1/admin/documents",
+        headers=auth_headers,
+        files={"file": ("../../etc/passwd.txt", io.BytesIO(content), "text/plain")},
+    )
+    assert response.status_code == 200
+    doc_id = response.json()["id"]
+
+    from app.core.db import get_db_connection
+
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("select storage_path from documents where id = %s", (doc_id,))
+            (storage_path,) = cur.fetchone()
+    finally:
+        conn.close()
+
+    assert ".." not in storage_path
+    assert "/" not in storage_path.split("/", 1)[1]
+
+    client.delete(f"/api/v1/admin/documents/{doc_id}", headers=auth_headers)
+
+
+def test_reprocess_regenerates_chunks(auth_headers):
+    content = b"Contenido original para reprocesar. Tiene texto suficiente para generar chunks."
+    upload_response = client.post(
+        "/api/v1/admin/documents",
+        headers=auth_headers,
+        files={"file": ("reprocesable.txt", io.BytesIO(content), "text/plain")},
+    )
+    assert upload_response.status_code == 200
+    doc_id = upload_response.json()["id"]
+
+    list_response = client.get("/api/v1/admin/documents", headers=auth_headers)
+    ready = next(d for d in list_response.json() if d["id"] == doc_id)
+    assert ready["status"] == "ready"
+    assert ready["chunk_count"] >= 1
+
+    reprocess_response = client.post(f"/api/v1/admin/documents/{doc_id}/reprocess", headers=auth_headers)
+    assert reprocess_response.status_code == 200
+    assert reprocess_response.json()["status"] == "processing"
+
+    list_response = client.get("/api/v1/admin/documents", headers=auth_headers)
+    reprocessed = next(d for d in list_response.json() if d["id"] == doc_id)
+    assert reprocessed["status"] == "ready"
+    assert reprocessed["chunk_count"] >= 1
+
+    client.delete(f"/api/v1/admin/documents/{doc_id}", headers=auth_headers)
+
+
+def test_reprocess_requires_admin(non_admin_token):
+    response = client.post(
+        "/api/v1/admin/documents/00000000-0000-0000-0000-000000000000/reprocess",
+        headers={"Authorization": f"Bearer {non_admin_token}"},
+    )
+    assert response.status_code == 403
+
+
+def test_reprocess_unknown_document_returns_404(auth_headers):
+    response = client.post(
+        "/api/v1/admin/documents/00000000-0000-0000-0000-000000000000/reprocess",
+        headers=auth_headers,
+    )
+    assert response.status_code == 404
+
+
 def test_folder_create_requires_admin(non_admin_token):
     response = client.post(
         "/api/v1/admin/folders",

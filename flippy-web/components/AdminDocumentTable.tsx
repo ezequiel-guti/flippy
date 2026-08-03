@@ -27,6 +27,7 @@ function buildFolderOptions(folders: DocumentFolder[]): FolderOption[] {
 interface AdminDocumentTableProps {
   documents: DocumentSummary[];
   onDelete: (id: string) => void;
+  onReprocess: (id: string) => void;
   folders?: DocumentFolder[];
   onMove?: (documentId: string, folderId: string | null) => void;
   /** Full corpus to search across when the query is non-empty — lets search
@@ -46,6 +47,7 @@ const PAGE_SIZE_OPTIONS = [10, 50, 100];
 export default function AdminDocumentTable({
   documents,
   onDelete,
+  onReprocess,
   folders = [],
   onMove,
   searchScope,
@@ -165,9 +167,20 @@ export default function AdminDocumentTable({
                   </td>
                 )}
                 <td>
-                  <button type="button" className={styles.deleteButton} onClick={() => onDelete(doc.id)}>
-                    Eliminar
-                  </button>
+                  <div className={styles.actions}>
+                    <button
+                      type="button"
+                      className={styles.reprocessButton}
+                      onClick={() => onReprocess(doc.id)}
+                      aria-label={`Reprocesar ${doc.name}`}
+                      title="Reprocesar"
+                    >
+                      ↻
+                    </button>
+                    <button type="button" className={styles.deleteButton} onClick={() => onDelete(doc.id)}>
+                      Eliminar
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

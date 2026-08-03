@@ -83,6 +83,15 @@ export default function AdminPage() {
     }
   }
 
+  async function handleReprocess(id: string) {
+    try {
+      await apiPost(`/api/v1/admin/documents/${id}/reprocess`, {});
+      await loadDocuments();
+    } catch {
+      setError("No pudimos reprocesar el documento. Refrescá la página.");
+    }
+  }
+
   async function handleMoveDocument(documentId: string, folderId: string | null) {
     try {
       await apiPatch(`/api/v1/admin/documents/${documentId}/folder`, { folder_id: folderId });
@@ -171,6 +180,7 @@ export default function AdminPage() {
                   documents={documentsInCurrentFolder}
                   searchScope={allDocuments}
                   onDelete={handleDelete}
+                  onReprocess={handleReprocess}
                   folders={folders}
                   onMove={handleMoveDocument}
                 />
