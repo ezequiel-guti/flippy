@@ -1,8 +1,11 @@
 """Apply SQL migration files in supabase/migrations, in filename order.
 
 Usage: python scripts/apply_migrations.py
-Requires SUPABASE_DB_URL in .env (direct connection, not the transaction pooler).
+Requires SUPABASE_DB_URL, read from a local .env file if present (dev) or from
+the process environment otherwise (e.g. Railway, which injects env vars directly
+without a .env file).
 """
+import os
 import pathlib
 import sys
 
@@ -13,10 +16,10 @@ MIGRATIONS_DIR = pathlib.Path(__file__).parent.parent / "supabase" / "migrations
 
 
 def main() -> None:
-    env = dotenv_values(pathlib.Path(__file__).parent.parent / ".env")
+    env = {**os.environ, **dotenv_values(pathlib.Path(__file__).parent.parent / ".env")}
     db_url = env.get("SUPABASE_DB_URL")
     if not db_url:
-        print("SUPABASE_DB_URL is not set in .env", file=sys.stderr)
+        print("SUPABASE_DB_URL is not set (.env or process environment)", file=sys.stderr)
         sys.exit(1)
 
     migration_files = sorted(MIGRATIONS_DIR.glob("*.sql"))
