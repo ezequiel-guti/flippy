@@ -91,7 +91,13 @@ export default function AdminPage() {
       setAllDocuments((prev) =>
         prev.map((d) =>
           d.id === id
-            ? { ...d, status: updated.status, chunk_count: updated.chunk_count, error_detail: updated.error_detail }
+            ? {
+                ...d,
+                status: updated.status,
+                chunk_count: updated.chunk_count,
+                error_detail: updated.error_detail,
+                processing_started_at: updated.processing_started_at,
+              }
             : d
         )
       );

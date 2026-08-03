@@ -48,8 +48,9 @@ class DocumentsService:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    insert into documents (id, name, type, storage_path, status, chunk_count, folder_id)
-                    values (%s, %s, %s, %s, 'processing', 0, %s)
+                    insert into documents
+                        (id, name, type, storage_path, status, chunk_count, folder_id, processing_started_at)
+                    values (%s, %s, %s, %s, 'processing', 0, %s, now())
                     """,
                     (doc_id, name, doc_type, storage_path, folder_id),
                 )
@@ -137,8 +138,8 @@ class DocumentsService:
             with conn.cursor() as cur:
                 cur.execute("delete from document_chunks where document_id = %s", (doc_id,))
                 cur.execute(
-                    "update documents set status = 'processing', chunk_count = 0, error_detail = null "
-                    "where id = %s",
+                    "update documents set status = 'processing', chunk_count = 0, error_detail = null, "
+                    "processing_started_at = now() where id = %s",
                     (doc_id,),
                 )
             conn.commit()
@@ -158,8 +159,8 @@ class DocumentsService:
         try:
             with conn.cursor() as cur:
                 query = (
-                    "select id, name, type, status, chunk_count, folder_id, created_at, error_detail "
-                    "from documents"
+                    "select id, name, type, status, chunk_count, folder_id, created_at, error_detail, "
+                    "processing_started_at from documents"
                 )
                 params: tuple = ()
                 if filter_by_folder:
@@ -184,6 +185,7 @@ class DocumentsService:
                 "folder_id": str(row[5]) if row[5] else None,
                 "created_at": row[6].isoformat(),
                 "error_detail": row[7],
+                "processing_started_at": row[8].isoformat() if row[8] else None,
             }
             for row in rows
         ]
@@ -218,7 +220,8 @@ class DocumentsService:
                 cur.execute(
                     """
                     update documents set folder_id = %s where id = %s
-                    returning id, name, type, status, chunk_count, folder_id, created_at, error_detail
+                    returning id, name, type, status, chunk_count, folder_id, created_at, error_detail,
+                        processing_started_at
                     """,
                     (folder_id, doc_id),
                 )
@@ -238,6 +241,7 @@ class DocumentsService:
             "folder_id": str(row[5]) if row[5] else None,
             "created_at": row[6].isoformat(),
             "error_detail": row[7],
+            "processing_started_at": row[8].isoformat() if row[8] else None,
         }
 
 

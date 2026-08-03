@@ -120,8 +120,15 @@
   cursor: not-allowed;
 }
 
+.tableScroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
 .table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   background: var(--color-white);
   border: 1px solid var(--color-line);
@@ -136,12 +143,39 @@
   text-align: left;
   padding: 10px 14px;
   border-bottom: 1px solid var(--color-line);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .table th {
   font-size: var(--font-size-label);
   color: var(--color-text-secondary);
   font-weight: var(--font-weight-regular);
+  white-space: nowrap;
+}
+
+.table td:first-child {
+  word-break: break-word;
+}
+
+.colType {
+  width: 70px;
+}
+
+.colStatus {
+  width: 100px;
+}
+
+.colChunks {
+  width: 70px;
+}
+
+.colFolder {
+  width: 150px;
+}
+
+.colActions {
+  width: 230px;
 }
 
 .badge {
@@ -174,7 +208,8 @@
   border: 1px solid var(--color-line);
   border-radius: var(--border-radius-sm);
   padding: 4px 8px;
-  max-width: 200px;
+  width: 100%;
+  max-width: 100%;
 }
 
 .deleteButton {
@@ -195,6 +230,7 @@
 .actions {
   display: flex;
   gap: 6px;
+  white-space: nowrap;
 }
 
 .reprocessButton {

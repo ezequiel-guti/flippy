@@ -10,6 +10,7 @@ class DocumentResponse(BaseModel):
     folder_id: str | None = None
     created_at: str
     error_detail: str | None = None
+    processing_started_at: str | None = None
 
 
 class FolderResponse(BaseModel):

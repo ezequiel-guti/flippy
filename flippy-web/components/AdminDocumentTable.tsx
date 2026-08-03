@@ -44,6 +44,12 @@ const STATUS_LABEL: Record<DocumentSummary["status"], string> = {
 };
 
 const PAGE_SIZE_OPTIONS = [10, 50, 100];
+const STUCK_PROCESSING_MS = 10 * 60 * 1000;
+
+function isStuckProcessing(doc: DocumentSummary): boolean {
+  if (doc.status !== "processing" || !doc.processing_started_at) return false;
+  return Date.now() - new Date(doc.processing_started_at).getTime() > STUCK_PROCESSING_MS;
+}
 
 export default function AdminDocumentTable({
   documents,
@@ -130,7 +136,16 @@ export default function AdminDocumentTable({
           {trimmedQuery ? "No encontramos documentos con ese nombre." : "Esta carpeta no tiene documentos."}
         </p>
       ) : (
+        <div className={styles.tableScroll}>
         <table className={styles.table}>
+          <colgroup>
+            <col />
+            <col className={styles.colType} />
+            <col className={styles.colStatus} />
+            <col className={styles.colChunks} />
+            {onMove && <col className={styles.colFolder} />}
+            <col className={styles.colActions} />
+          </colgroup>
           <thead>
             <tr>
               <th>Nombre</th>
@@ -177,7 +192,15 @@ export default function AdminDocumentTable({
                       type="button"
                       className={styles.reprocessButton}
                       onClick={() => onReprocess(doc.id)}
-                      disabled={reprocessingIds?.has(doc.id) || doc.status === "processing"}
+                      disabled={
+                        reprocessingIds?.has(doc.id) ||
+                        (doc.status === "processing" && !isStuckProcessing(doc))
+                      }
+                      title={
+                        doc.status === "processing" && isStuckProcessing(doc)
+                          ? "Lleva más de 10 minutos procesando"
+                          : undefined
+                      }
                       aria-label={`Reprocesar ${doc.name}`}
                     >
                       {reprocessingIds?.has(doc.id) && <span className={styles.spinner} aria-hidden="true" />}
@@ -192,6 +215,7 @@ export default function AdminDocumentTable({
             ))}
           </tbody>
         </table>
+        </div>
       )}
 
       {!nothingToSearch && pageItems.length > 0 && (

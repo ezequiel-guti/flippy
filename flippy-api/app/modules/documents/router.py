@@ -48,6 +48,7 @@ async def upload_document(
     created = DocumentsService.create_document(file.filename, doc_type, content, folder_id)
     background_tasks.add_task(DocumentsService.process_document, created["id"], content, doc_type)
 
+    now = datetime.now(timezone.utc).isoformat()
     return {
         "id": created["id"],
         "name": created["name"],
@@ -55,7 +56,8 @@ async def upload_document(
         "status": "processing",
         "chunk_count": 0,
         "folder_id": created.get("folder_id"),
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": now,
+        "processing_started_at": now,
     }
 
 
@@ -89,6 +91,7 @@ def reprocess_document(
         DocumentsService.process_document, document_id, prepared["content"], prepared["type"]
     )
 
+    now = datetime.now(timezone.utc).isoformat()
     return {
         "id": document_id,
         "name": prepared["name"],
@@ -96,7 +99,8 @@ def reprocess_document(
         "status": "processing",
         "chunk_count": 0,
         "folder_id": prepared["folder_id"],
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": now,
+        "processing_started_at": now,
     }
 
 

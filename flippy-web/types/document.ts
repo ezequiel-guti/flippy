@@ -7,4 +7,5 @@ export interface DocumentSummary {
   folder_id: string | null;
   created_at: string;
   error_detail?: string | null;
+  processing_started_at?: string | null;
 }

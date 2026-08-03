@@ -51,6 +51,42 @@ describe("AdminDocumentTable", () => {
     expect(onReprocess).toHaveBeenCalledWith("1");
   });
 
+  it("enables reprocess for a document stuck processing for over 10 minutes", () => {
+    const stuck: DocumentSummary[] = [
+      {
+        id: "5",
+        name: "atascado.pdf",
+        type: "pdf",
+        status: "processing",
+        chunk_count: 0,
+        folder_id: null,
+        created_at: "2026-08-03T00:00:00Z",
+        processing_started_at: new Date(Date.now() - 11 * 60 * 1000).toISOString(),
+      },
+    ];
+    render(<AdminDocumentTable documents={stuck} onDelete={jest.fn()} onReprocess={jest.fn()} />);
+    const button = screen.getByLabelText(/reprocesar atascado.pdf/i);
+    expect(button).not.toBeDisabled();
+    expect(button).toHaveAttribute("title", "Lleva más de 10 minutos procesando");
+  });
+
+  it("keeps reprocess disabled for a document processing for under 10 minutes", () => {
+    const recent: DocumentSummary[] = [
+      {
+        id: "6",
+        name: "reciente.pdf",
+        type: "pdf",
+        status: "processing",
+        chunk_count: 0,
+        folder_id: null,
+        created_at: "2026-08-03T00:00:00Z",
+        processing_started_at: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
+      },
+    ];
+    render(<AdminDocumentTable documents={recent} onDelete={jest.fn()} onReprocess={jest.fn()} />);
+    expect(screen.getByLabelText(/reprocesar reciente.pdf/i)).toBeDisabled();
+  });
+
   it("shows error_detail as a tooltip on the Error badge", () => {
     const withError: DocumentSummary[] = [
       {
