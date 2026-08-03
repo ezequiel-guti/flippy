@@ -33,8 +33,9 @@
 }
 
 .loading {
-  font-family: var(--font-secondary);
-  color: var(--color-text-secondary);
+  display: flex;
+  justify-content: center;
+  padding: 48px 0;
 }
 
 .error {

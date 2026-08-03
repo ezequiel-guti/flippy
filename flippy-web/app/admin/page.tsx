@@ -10,6 +10,7 @@ import AdminTopBar from "@/components/AdminTopBar";
 import AdminUploadForm from "@/components/AdminUploadForm";
 import AdminDocumentTable from "@/components/AdminDocumentTable";
 import AdminFolderPanel from "@/components/AdminFolderPanel";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import styles from "./page.module.css";
 
 const POLL_INTERVAL_MS = 4000;
@@ -194,7 +195,9 @@ export default function AdminPage() {
 
             {!isUploadPanelOpen &&
               (isLoading ? (
-                <p className={styles.loading}>Cargando documentos…</p>
+                <div className={styles.loading}>
+                  <LoadingSpinner label="Cargando documentos…" />
+                </div>
               ) : (
                 <AdminDocumentTable
                   documents={documentsInCurrentFolder}

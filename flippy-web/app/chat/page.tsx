@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import ChatSidebar from "@/components/ChatSidebar";
 import ChatWindow from "@/components/ChatWindow";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { apiGet, apiPost, apiPatch, apiDelete, ApiError } from "@/services/api";
 import type { ChatMessageData, ChatSummary } from "@/types/chat";
 import styles from "./page.module.css";
@@ -139,7 +140,11 @@ export default function ChatPage() {
   }
 
   if (isLoading) {
-    return <main className={styles.loadingPage}>Cargando…</main>;
+    return (
+      <main className={styles.loadingPage}>
+        <LoadingSpinner label="Cargando…" />
+      </main>
+    );
   }
 
   return (
