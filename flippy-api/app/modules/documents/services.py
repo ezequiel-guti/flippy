@@ -67,7 +67,9 @@ class DocumentsService:
             if doc_type not in VECTORIZABLE_TYPES:
                 # RN-05: las imagenes del corpus no se vectorizan, Claude las procesa en consulta
                 with conn.cursor() as cur:
-                    cur.execute("update documents set status = 'ready' where id = %s", (doc_id,))
+                    cur.execute(
+                        "update documents set status = 'ready', error_detail = null where id = %s", (doc_id,)
+                    )
                 conn.commit()
                 return
 
@@ -76,7 +78,10 @@ class DocumentsService:
 
             if not chunks:
                 with conn.cursor() as cur:
-                    cur.execute("update documents set status = 'ready', chunk_count = 0 where id = %s", (doc_id,))
+                    cur.execute(
+                        "update documents set status = 'ready', chunk_count = 0, error_detail = null where id = %s",
+                        (doc_id,),
+                    )
                 conn.commit()
                 return
 
@@ -92,14 +97,17 @@ class DocumentsService:
                         (doc_id, chunk, json.dumps(embedding), index, Json({})),
                     )
                 cur.execute(
-                    "update documents set status = 'ready', chunk_count = %s where id = %s",
+                    "update documents set status = 'ready', chunk_count = %s, error_detail = null where id = %s",
                     (len(chunks), doc_id),
                 )
             conn.commit()
-        except Exception:
+        except Exception as exc:
             conn.rollback()
             with conn.cursor() as cur:
-                cur.execute("update documents set status = 'error' where id = %s", (doc_id,))
+                cur.execute(
+                    "update documents set status = 'error', error_detail = %s where id = %s",
+                    (str(exc)[:2000], doc_id),
+                )
             conn.commit()
             raise
         finally:
@@ -129,7 +137,9 @@ class DocumentsService:
             with conn.cursor() as cur:
                 cur.execute("delete from document_chunks where document_id = %s", (doc_id,))
                 cur.execute(
-                    "update documents set status = 'processing', chunk_count = 0 where id = %s", (doc_id,)
+                    "update documents set status = 'processing', chunk_count = 0, error_detail = null "
+                    "where id = %s",
+                    (doc_id,),
                 )
             conn.commit()
         finally:
@@ -148,7 +158,7 @@ class DocumentsService:
         try:
             with conn.cursor() as cur:
                 query = (
-                    "select id, name, type, status, chunk_count, folder_id, created_at "
+                    "select id, name, type, status, chunk_count, folder_id, created_at, error_detail "
                     "from documents"
                 )
                 params: tuple = ()
@@ -173,6 +183,7 @@ class DocumentsService:
                 "chunk_count": row[4],
                 "folder_id": str(row[5]) if row[5] else None,
                 "created_at": row[6].isoformat(),
+                "error_detail": row[7],
             }
             for row in rows
         ]
@@ -207,7 +218,7 @@ class DocumentsService:
                 cur.execute(
                     """
                     update documents set folder_id = %s where id = %s
-                    returning id, name, type, status, chunk_count, folder_id, created_at
+                    returning id, name, type, status, chunk_count, folder_id, created_at, error_detail
                     """,
                     (folder_id, doc_id),
                 )
@@ -226,6 +237,7 @@ class DocumentsService:
             "chunk_count": row[4],
             "folder_id": str(row[5]) if row[5] else None,
             "created_at": row[6].isoformat(),
+            "error_detail": row[7],
         }
 
 

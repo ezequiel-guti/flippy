@@ -133,6 +133,27 @@ def test_upload_sanitizes_traversal_in_filename(auth_headers):
     client.delete(f"/api/v1/admin/documents/{doc_id}", headers=auth_headers)
 
 
+def test_failed_processing_stores_error_detail(auth_headers):
+    # process_document re-raises after recording the failure (so Starlette logs it
+    # server-side in production) — calling it directly here, instead of through the
+    # upload endpoint, avoids depending on how TestClient runs background tasks.
+    from app.modules.documents.services import DocumentsService
+
+    invalid_pdf = b"esto no es un PDF valido"
+    created = DocumentsService.create_document("invalido.pdf", "pdf", invalid_pdf)
+    doc_id = created["id"]
+
+    with pytest.raises(Exception):
+        DocumentsService.process_document(doc_id, invalid_pdf, "pdf")
+
+    list_response = client.get("/api/v1/admin/documents", headers=auth_headers)
+    doc = next(d for d in list_response.json() if d["id"] == doc_id)
+    assert doc["status"] == "error"
+    assert doc["error_detail"]
+
+    client.delete(f"/api/v1/admin/documents/{doc_id}", headers=auth_headers)
+
+
 def test_reprocess_regenerates_chunks(auth_headers):
     content = b"Contenido original para reprocesar. Tiene texto suficiente para generar chunks."
     upload_response = client.post(

@@ -9,6 +9,7 @@ class DocumentResponse(BaseModel):
     chunk_count: int
     folder_id: str | None = None
     created_at: str
+    error_detail: str | None = None
 
 
 class FolderResponse(BaseModel):

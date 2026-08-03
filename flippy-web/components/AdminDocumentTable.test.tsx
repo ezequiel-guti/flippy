@@ -51,6 +51,23 @@ describe("AdminDocumentTable", () => {
     expect(onReprocess).toHaveBeenCalledWith("1");
   });
 
+  it("shows error_detail as a tooltip on the Error badge", () => {
+    const withError: DocumentSummary[] = [
+      {
+        id: "4",
+        name: "roto.pdf",
+        type: "pdf",
+        status: "error",
+        chunk_count: 0,
+        folder_id: null,
+        created_at: "2026-08-02T00:00:00Z",
+        error_detail: "Timeout llamando a OpenAI",
+      },
+    ];
+    render(<AdminDocumentTable documents={withError} onDelete={jest.fn()} onReprocess={jest.fn()} />);
+    expect(screen.getByText("Error")).toHaveAttribute("title", "Timeout llamando a OpenAI");
+  });
+
   it("disables the reprocess button while the document is processing", () => {
     render(<AdminDocumentTable documents={documents} onDelete={jest.fn()} onReprocess={jest.fn()} />);
     expect(screen.getByLabelText(/reprocesar notas.txt/i)).toBeDisabled();

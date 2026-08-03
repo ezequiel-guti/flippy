@@ -6,4 +6,5 @@ export interface DocumentSummary {
   chunk_count: number;
   folder_id: string | null;
   created_at: string;
+  error_detail?: string | null;
 }

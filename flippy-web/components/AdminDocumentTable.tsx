@@ -147,7 +147,10 @@ export default function AdminDocumentTable({
                 <td>{doc.name}</td>
                 <td>{doc.type}</td>
                 <td>
-                  <span className={`${styles.badge} ${styles[`badge_${doc.status}`]}`}>
+                  <span
+                    className={`${styles.badge} ${styles[`badge_${doc.status}`]}`}
+                    title={doc.status === "error" && doc.error_detail ? doc.error_detail : undefined}
+                  >
                     {STATUS_LABEL[doc.status]}
                   </span>
                 </td>

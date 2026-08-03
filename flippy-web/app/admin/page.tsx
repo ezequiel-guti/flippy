@@ -89,7 +89,11 @@ export default function AdminPage() {
     try {
       const updated = await apiPost<DocumentSummary>(`/api/v1/admin/documents/${id}/reprocess`, {});
       setAllDocuments((prev) =>
-        prev.map((d) => (d.id === id ? { ...d, status: updated.status, chunk_count: updated.chunk_count } : d))
+        prev.map((d) =>
+          d.id === id
+            ? { ...d, status: updated.status, chunk_count: updated.chunk_count, error_detail: updated.error_detail }
+            : d
+        )
       );
     } catch {
       setError("No pudimos reprocesar el documento. Refrescá la página.");
