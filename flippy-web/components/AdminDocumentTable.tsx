@@ -28,6 +28,7 @@ interface AdminDocumentTableProps {
   documents: DocumentSummary[];
   onDelete: (id: string) => void;
   onReprocess: (id: string) => void;
+  onDownload: (id: string) => void;
   reprocessingIds?: Set<string>;
   folders?: DocumentFolder[];
   onMove?: (documentId: string, folderId: string | null) => void;
@@ -55,6 +56,7 @@ export default function AdminDocumentTable({
   documents,
   onDelete,
   onReprocess,
+  onDownload,
   reprocessingIds,
   folders = [],
   onMove,
@@ -188,6 +190,14 @@ export default function AdminDocumentTable({
                 )}
                 <td>
                   <div className={styles.actions}>
+                    <button
+                      type="button"
+                      className={styles.downloadButton}
+                      onClick={() => onDownload(doc.id)}
+                      aria-label={`Descargar ${doc.name}`}
+                    >
+                      Descargar
+                    </button>
                     <button
                       type="button"
                       className={styles.reprocessButton}

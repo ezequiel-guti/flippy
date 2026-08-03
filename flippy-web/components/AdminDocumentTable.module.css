@@ -175,7 +175,7 @@
 }
 
 .colActions {
-  width: 230px;
+  width: 330px;
 }
 
 .badge {
@@ -231,6 +231,21 @@
   display: flex;
   gap: 6px;
   white-space: nowrap;
+}
+
+.downloadButton {
+  font-family: var(--font-secondary);
+  font-size: var(--font-size-label);
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: 1px solid var(--color-line);
+  border-radius: var(--border-radius-sm);
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.downloadButton:hover {
+  background: rgba(43, 43, 45, 0.05);
 }
 
 .reprocessButton {

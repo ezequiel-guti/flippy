@@ -113,6 +113,15 @@ export default function AdminPage() {
     }
   }
 
+  async function handleDownload(id: string) {
+    try {
+      const { url } = await apiGet<{ url: string }>(`/api/v1/admin/documents/${id}/download`);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch {
+      setError("No pudimos generar el link de descarga. Refrescá la página.");
+    }
+  }
+
   async function handleMoveDocument(documentId: string, folderId: string | null) {
     try {
       await apiPatch(`/api/v1/admin/documents/${documentId}/folder`, { folder_id: folderId });
@@ -204,6 +213,7 @@ export default function AdminPage() {
                   searchScope={allDocuments}
                   onDelete={handleDelete}
                   onReprocess={handleReprocess}
+                  onDownload={handleDownload}
                   reprocessingIds={reprocessingIds}
                   folders={folders}
                   onMove={handleMoveDocument}

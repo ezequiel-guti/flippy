@@ -104,6 +104,17 @@ def reprocess_document(
     }
 
 
+@router.get("/{document_id}/download")
+def get_download_url(document_id: str, _admin: TokenData = Depends(require_admin)):
+    try:
+        url = DocumentsService.get_download_url(document_id)
+    except SupabaseStorageError:
+        raise HTTPException(status_code=502, detail="No pudimos generar el link de descarga")
+    if not url:
+        raise HTTPException(status_code=404, detail="Documento no encontrado")
+    return {"url": url}
+
+
 @router.delete("/{document_id}")
 def delete_document(document_id: str, _admin: TokenData = Depends(require_admin)):
     deleted = DocumentsService.delete_document(document_id)

@@ -154,6 +154,38 @@ def test_failed_processing_stores_error_detail(auth_headers):
     client.delete(f"/api/v1/admin/documents/{doc_id}", headers=auth_headers)
 
 
+def test_download_returns_signed_url(auth_headers):
+    content = b"contenido para descargar"
+    upload_response = client.post(
+        "/api/v1/admin/documents",
+        headers=auth_headers,
+        files={"file": ("descargable.txt", io.BytesIO(content), "text/plain")},
+    )
+    doc_id = upload_response.json()["id"]
+
+    download_response = client.get(f"/api/v1/admin/documents/{doc_id}/download", headers=auth_headers)
+    assert download_response.status_code == 200
+    assert download_response.json()["url"].startswith("http")
+
+    client.delete(f"/api/v1/admin/documents/{doc_id}", headers=auth_headers)
+
+
+def test_download_unknown_document_returns_404(auth_headers):
+    response = client.get(
+        "/api/v1/admin/documents/00000000-0000-0000-0000-000000000000/download",
+        headers=auth_headers,
+    )
+    assert response.status_code == 404
+
+
+def test_download_requires_admin(non_admin_token):
+    response = client.get(
+        "/api/v1/admin/documents/00000000-0000-0000-0000-000000000000/download",
+        headers={"Authorization": f"Bearer {non_admin_token}"},
+    )
+    assert response.status_code == 403
+
+
 def test_reprocess_regenerates_chunks(auth_headers):
     content = b"Contenido original para reprocesar. Tiene texto suficiente para generar chunks."
     upload_response = client.post(

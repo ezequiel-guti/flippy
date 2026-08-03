@@ -191,6 +191,20 @@ class DocumentsService:
         ]
 
     @staticmethod
+    def get_download_url(doc_id: str) -> str | None:
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("select storage_path from documents where id = %s", (doc_id,))
+                row = cur.fetchone()
+        finally:
+            conn.close()
+
+        if not row:
+            return None
+        return supabase_storage.create_signed_url(row[0], expires_in=300)
+
+    @staticmethod
     def delete_document(doc_id: str) -> bool:
         conn = get_db_connection()
         try:
