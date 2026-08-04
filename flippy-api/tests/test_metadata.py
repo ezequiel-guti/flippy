@@ -24,6 +24,21 @@ class TestDeterministicPass:
         result = extract_metadata("texto de prueba", "reporte_mercado.pdf")
         assert result.fecha_vigencia == "2026-05-01"
 
+    def test_extracts_spanish_month_abbreviation_no_separator(self, monkeypatch):
+        monkeypatch.setattr(gemini, "generate_text", lambda prompt: _mock_response({}))
+        result = extract_metadata("texto", "Planilla_Rubros_mod.11-REFORMAS.BANO_Mar2026.pdf")
+        assert result.fecha_vigencia == "2026-03-01"
+
+    def test_extracts_spanish_month_full_name_with_separator(self, monkeypatch):
+        monkeypatch.setattr(gemini, "generate_text", lambda prompt: _mock_response({}))
+        result = extract_metadata("texto", "Listado_de_materiales_y_mano_de_obra_julio_2026.pdf")
+        assert result.fecha_vigencia == "2026-07-01"
+
+    def test_iso_date_takes_priority_over_spanish_month(self, monkeypatch):
+        monkeypatch.setattr(gemini, "generate_text", lambda prompt: _mock_response({}))
+        result = extract_metadata("texto", "reporte_2026-06-22_Abr2026.pdf")
+        assert result.fecha_vigencia == "2026-06-22"
+
 
 class TestVocabularioCerrado:
     def test_valid_tipo_is_kept(self, monkeypatch):

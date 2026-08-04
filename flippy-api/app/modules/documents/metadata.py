@@ -77,21 +77,43 @@ _FILENAME_DATE_RE = re.compile(
     r"|(?:(?P<d2>\d{2})[-_](?P<m2>\d{2})[-_](?P<y2>\d{4}))"
 )
 
+# Meses en español, abreviados o completos (Mar2026, Abr2026, julio_2026...) —
+# patrón real del corpus del cliente (planillas de rubros, listados de insumos),
+# ninguno usaba el formato ISO de _FILENAME_DATE_RE (Incremento 18.7).
+_MESES_ES = {
+    "ene": 1, "feb": 2, "mar": 3, "abr": 4, "may": 5, "jun": 6,
+    "jul": 7, "ago": 8, "sep": 9, "set": 9, "oct": 10, "nov": 11, "dic": 12,
+}
+_SPANISH_MONTH_RE = re.compile(
+    r"(ene|feb|mar|abr|may|jun|jul|ago|sep|set|oct|nov|dic)[a-záéíóúñ]*[-_ ]?(\d{4})",
+    re.IGNORECASE,
+)
+
 
 def _deterministic_fecha_from_filename(filename: str) -> str | None:
     match = _FILENAME_DATE_RE.search(filename)
-    if not match:
-        return None
-    if match.group("y1"):
-        y, m, d = match.group("y1"), match.group("m1"), match.group("d1")
-    else:
-        y, m, d = match.group("y2"), match.group("m2"), match.group("d2")
-    try:
-        if not (1 <= int(m) <= 12 and 1 <= int(d) <= 31):
+    if match:
+        if match.group("y1"):
+            y, m, d = match.group("y1"), match.group("m1"), match.group("d1")
+        else:
+            y, m, d = match.group("y2"), match.group("m2"), match.group("d2")
+        try:
+            if not (1 <= int(m) <= 12 and 1 <= int(d) <= 31):
+                return None
+        except ValueError:
             return None
-    except ValueError:
-        return None
-    return f"{y}-{m}-{d}"
+        return f"{y}-{m}-{d}"
+
+    month_match = _SPANISH_MONTH_RE.search(filename)
+    if month_match:
+        month = _MESES_ES[month_match.group(1).lower()]
+        year = month_match.group(2)
+        if 1900 <= int(year) <= 2100:
+            # sin día explícito en el nombre de archivo: primer día del mes,
+            # mismo criterio que el prompt del modelo (§6.4) para "datos de un mes"
+            return f"{year}-{month:02d}-01"
+
+    return None
 
 
 def _first_n_tokens(text: str, n: int) -> str:

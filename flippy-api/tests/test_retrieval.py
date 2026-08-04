@@ -1,5 +1,13 @@
-"""Tests de clasificación de intención y ventana temporal (SPEC_RAG.md §7)."""
-from app.modules.chat.retrieval import _widen_steps, classify_intent
+"""Tests de clasificación de intención y re-ranking blando (SPEC_RAG.md §7)."""
+from datetime import date, timedelta
+
+from app.modules.chat.retrieval import (
+    GENERAL_INTENT,
+    Intent,
+    _score,
+    _within_window,
+    classify_intent,
+)
 
 
 class TestClassifyIntent:
@@ -32,13 +40,58 @@ class TestClassifyIntent:
         # "materiales" está en costo_obra y tecnica; costo_obra va primero en la tabla §7.2
         assert classify_intent("necesito materiales para la obra").name == "costo_obra"
 
+    def test_faq_is_a_valid_tipo_for_metodologia(self):
+        intent = classify_intent("¿conviene comprar en primer piso?")
+        assert intent.name == "metodologia"
+        assert "faq" in intent.tipo_filter
 
-class TestWidenSteps:
-    def test_precio_actual_base_6_months(self):
-        assert _widen_steps(6) == [6, 12, 24, None]
 
-    def test_costo_obra_base_4_months(self):
-        assert _widen_steps(4) == [4, 12, 24, None]
+class TestWithinWindow:
+    TODAY = date(2026, 8, 4)
 
-    def test_always_ends_without_filter(self):
-        assert _widen_steps(24)[-1] is None
+    def test_none_fecha_is_never_within_window(self):
+        assert not _within_window(None, 6, self.TODAY)
+
+    def test_recent_fecha_is_within_window(self):
+        assert _within_window(self.TODAY - timedelta(days=10), 6, self.TODAY)
+
+    def test_old_fecha_is_not_within_window(self):
+        assert not _within_window(self.TODAY - timedelta(days=365), 6, self.TODAY)
+
+
+class TestScore:
+    TODAY = date(2026, 8, 4)
+    COSTO_OBRA = Intent("costo_obra", ["costo"], top_k=6, base_window_months=4)
+
+    def test_matching_tipo_gets_bonus(self):
+        matching = {"similarity": 0.5, "tipo": "costo", "fecha_vigencia": None}
+        other = {"similarity": 0.5, "tipo": "normativa", "fecha_vigencia": None}
+        assert _score(matching, self.COSTO_OBRA, self.TODAY) > _score(other, self.COSTO_OBRA, self.TODAY)
+
+    def test_missing_date_is_penalized_but_not_excluded(self):
+        no_date = {"similarity": 0.5, "tipo": "costo", "fecha_vigencia": None}
+        score = _score(no_date, self.COSTO_OBRA, self.TODAY)
+        assert score < 0.5 + 0.15  # penalizado respecto al máximo posible (similarity + tipo bonus)
+        assert score > 0  # nunca excluido — sigue siendo un candidato válido
+
+    def test_recent_date_beats_missing_date_at_equal_similarity(self):
+        recent = {"similarity": 0.5, "tipo": "costo", "fecha_vigencia": self.TODAY - timedelta(days=10)}
+        no_date = {"similarity": 0.5, "tipo": "costo", "fecha_vigencia": None}
+        assert _score(recent, self.COSTO_OBRA, self.TODAY) > _score(no_date, self.COSTO_OBRA, self.TODAY)
+
+    def test_very_stale_date_is_penalized_more_than_missing_date(self):
+        very_old = {"similarity": 0.5, "tipo": "costo", "fecha_vigencia": self.TODAY - timedelta(days=800)}
+        no_date = {"similarity": 0.5, "tipo": "costo", "fecha_vigencia": None}
+        assert _score(very_old, self.COSTO_OBRA, self.TODAY) < _score(no_date, self.COSTO_OBRA, self.TODAY)
+
+    def test_general_intent_ignores_tipo_and_date(self):
+        row = {"similarity": 0.5, "tipo": "costo", "fecha_vigencia": None}
+        assert _score(row, GENERAL_INTENT, self.TODAY) == 0.5
+
+    def test_high_similarity_can_still_outrank_a_bonus_without_it(self):
+        # el punto del re-ranking blando: similitud alta pesa más que perder un bonus puntual
+        strong_match_wrong_tipo = {"similarity": 0.68, "tipo": None, "fecha_vigencia": None}
+        weak_match_right_tipo = {"similarity": 0.42, "tipo": "costo", "fecha_vigencia": self.TODAY}
+        assert _score(strong_match_wrong_tipo, self.COSTO_OBRA, self.TODAY) > _score(
+            weak_match_right_tipo, self.COSTO_OBRA, self.TODAY
+        )

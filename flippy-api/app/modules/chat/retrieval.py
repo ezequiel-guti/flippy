@@ -1,19 +1,33 @@
 """Recuperación con filtrado por intención (SPEC_RAG.md §7).
 
-Clasificación heurística por keywords (barata, ~0ms) — sin llamada a modelo
-en el hito 2 (§7.5); si la evaluación (SPEC_RAG.md §8) muestra que la
-heurística falla por encima del 20%, se reevalúa.
+Re-ranking blando en vez de cascada de filtros duros (desviación de §7.4
+documentada en DECISIONS.md, Incremento 18.7): el candidate pool se arma solo
+por similitud, y tipo/fecha suman o restan puntaje en vez de excluir. La
+cascada dura de §7.3 (filtrar por tipo, y si <3 resultados ampliar ventana
+temporal 6→12→24→sin filtro) mostró en el eval real un patrón sistemático:
+un chunk correcto y mejor rankeado por similitud quedaba afuera porque el
+filtro de tipo lo excluía, o porque otros 3 chunks de *otro* documento con
+fecha más reciente ya satisfacían el mínimo y cortaban el ensanchamiento
+antes de llegar a él. Clasificación de intención heurística por keywords
+(barata, ~0ms) — sin llamada a modelo en el hito 2 (§7.5).
 """
 import json
 from dataclasses import dataclass
-from datetime import date, timedelta
+from datetime import date
 
 from app.core.db import get_db_connection
 
-SIMILARITY_THRESHOLD = 0.25
+SIMILARITY_THRESHOLD = 0.40  # SPEC_RAG.md §7.4 fija 0.25; subido con evidencia real del
+# eval (Incremento 18.6): los hits relevantes rankean en 0.55-0.68, el único falso
+# positivo detectado rankeó en 0.32 — hay una banda vacía entre ambos.
 HNSW_EF_SEARCH = 100
-MIN_RESULTS_BEFORE_WIDENING = 3
+CANDIDATE_POOL_SIZE = 30
 DAYS_PER_MONTH = 30  # aproximación suficiente para una ventana de "antigüedad de dato"
+
+TIPO_BONUS = 0.15
+MISSING_DATE_PENALTY = 0.03
+STALE_PENALTY = 0.06
+STALE_AGE_MULTIPLIER = 4  # más de (ventana base x 4) de antigüedad = penalización, no solo neutro
 
 
 @dataclass
@@ -21,7 +35,7 @@ class Intent:
     name: str
     tipo_filter: list[str] | None
     top_k: int
-    base_window_months: int | None = None  # None = sin ventana temporal obligatoria
+    base_window_months: int | None = None  # None = sin noción de antigüedad para esta intención
 
 
 # Orden importa (§7.5): de la señal más específica a la más genérica.
@@ -46,7 +60,10 @@ _INTENT_RULES: list[tuple[Intent, list[str]]] = [
         ],
     ),
     (
-        Intent("metodologia", ["metodologia", "caso_estudio"], top_k=5),
+        # "faq" incluido junto a metodologia/caso_estudio (Incremento 18.7) — la cápsula
+        # de la comunidad ("La comunidad opina") extrae como faq (formato pregunta/
+        # respuesta) y es, en la práctica, el contenido metodológico real del corpus.
+        Intent("metodologia", ["metodologia", "caso_estudio", "faq"], top_k=5),
         [
             "cómo hago", "como hago", "pasos", "sistema", "estrategia",
             "conviene", "cómo funciona", "como funciona",
@@ -80,20 +97,9 @@ def classify_intent(query: str) -> Intent:
     return GENERAL_INTENT
 
 
-def _widen_steps(base_months: int) -> list[int | None]:
-    """6→12→24→sin filtro (§7.3), arrancando en la ventana base de cada intención
-    en vez de siempre en 6 — costo_obra parte de 4 meses (§7.2), no de 6."""
-    steps: list[int | None] = [base_months]
-    for months in (12, 24):
-        if months > steps[-1]:
-            steps.append(months)
-    steps.append(None)
-    return steps
-
-
-def _query_chunks(
-    query_embedding: list[float], tipo_filter: list[str] | None, fecha_min: date | None, top_k: int
-) -> list[dict]:
+def _query_candidates(query_embedding: list[float], pool_size: int) -> list[dict]:
+    """Candidate pool: solo similitud + estado 'ready'. Sin filtro de tipo/fecha —
+    esos se aplican como puntaje en _score(), no como exclusión."""
     conn = get_db_connection()
     try:
         with conn.cursor() as cur:
@@ -103,26 +109,21 @@ def _query_chunks(
                 select
                     dc.content,
                     dc.fecha_vigencia,
+                    dc.tipo,
                     1 - (dc.embedding <=> %s::vector) as similarity
                 from document_chunks dc
                 join documents d on d.id = dc.document_id
                 where d.status = 'ready'
-                  and (%s::text[] is null or dc.tipo = any(%s))
-                  and (%s::date is null or dc.fecha_vigencia >= %s)
                   and 1 - (dc.embedding <=> %s::vector) >= %s
                 order by dc.embedding <=> %s::vector
                 limit %s
                 """,
                 (
                     json.dumps(query_embedding),
-                    tipo_filter,
-                    tipo_filter,
-                    fecha_min,
-                    fecha_min,
                     json.dumps(query_embedding),
                     SIMILARITY_THRESHOLD,
                     json.dumps(query_embedding),
-                    top_k,
+                    pool_size,
                 ),
             )
             rows = cur.fetchall()
@@ -130,31 +131,54 @@ def _query_chunks(
     finally:
         conn.close()
 
-    return [{"content": r[0], "fecha_vigencia": r[1], "similarity": r[2]} for r in rows]
+    return [{"content": r[0], "fecha_vigencia": r[1], "tipo": r[2], "similarity": r[3]} for r in rows]
+
+
+def _within_window(fecha_vigencia: date | None, months: int, today: date) -> bool:
+    if fecha_vigencia is None:
+        return False
+    return (today - fecha_vigencia).days <= months * DAYS_PER_MONTH
+
+
+def _score(row: dict, intent: Intent, today: date) -> float:
+    score = row["similarity"]
+
+    if intent.tipo_filter and row["tipo"] in intent.tipo_filter:
+        score += TIPO_BONUS
+
+    if intent.base_window_months is not None:
+        fecha = row["fecha_vigencia"]
+        if fecha is None:
+            score -= MISSING_DATE_PENALTY
+        elif not _within_window(fecha, intent.base_window_months, today):
+            age_days = (today - fecha).days
+            if age_days > intent.base_window_months * DAYS_PER_MONTH * STALE_AGE_MULTIPLIER:
+                score -= STALE_PENALTY
+            # entre la ventana base y el límite de "muy viejo": neutro, ni bonus ni penalidad
+
+    return score
 
 
 def search(query: str, query_embedding: list[float]) -> tuple[list[str], bool]:
-    """Retorna (textos de contexto, stale_notice). stale_notice=True cuando hubo
-    que ampliar la ventana temporal más allá de la inicial de la intención (§7.3)
-    — en ese caso cada chunk con fecha conocida lleva su fecha anotada, para que
-    el modelo pueda advertir que el dato podría estar desactualizado."""
+    """Retorna (textos de contexto, stale_notice). stale_notice=True cuando ningún
+    chunk seleccionado tiene fecha dentro de la ventana base de la intención — en
+    ese caso cada chunk con fecha conocida lleva su fecha anotada, para que el
+    modelo pueda advertir que el dato podría estar desactualizado (§7.3)."""
     intent = classify_intent(query)
+    candidates = _query_candidates(query_embedding, max(CANDIDATE_POOL_SIZE, intent.top_k * 5))
+    if not candidates:
+        return [], False
 
-    if intent.base_window_months is None:
-        rows = _query_chunks(query_embedding, intent.tipo_filter, None, intent.top_k)
-        return [r["content"] for r in rows], False
+    today = date.today()
+    ranked = sorted(candidates, key=lambda r: _score(r, intent, today), reverse=True)
+    top = ranked[: intent.top_k]
 
-    rows: list[dict] = []
-    stale = False
-    for step_index, months in enumerate(_widen_steps(intent.base_window_months)):
-        fecha_min = None if months is None else date.today() - timedelta(days=months * DAYS_PER_MONTH)
-        rows = _query_chunks(query_embedding, intent.tipo_filter, fecha_min, intent.top_k)
-        if len(rows) >= MIN_RESULTS_BEFORE_WIDENING or months is None:
-            stale = step_index > 0
-            break
+    stale = intent.base_window_months is not None and not any(
+        _within_window(r["fecha_vigencia"], intent.base_window_months, today) for r in top
+    )
 
     contents = []
-    for r in rows:
+    for r in top:
         text = r["content"]
         if stale and r["fecha_vigencia"]:
             text = f"{text}\n(dato con fecha de vigencia: {r['fecha_vigencia']})"
