@@ -8,6 +8,7 @@ from app.core.config import settings
 
 MODEL = "gemini-2.5-flash"
 BASE_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:streamGenerateContent"
+GENERATE_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent"
 
 
 class GeminiError(Exception):
@@ -55,3 +56,20 @@ def stream_chat(system_prompt: str, contents: list[dict]) -> Iterator[str]:
                         text = part.get("text")
                         if text:
                             yield text
+
+
+def generate_text(prompt: str) -> str:
+    """Single non-streaming call — used for structured extraction (SPEC_RAG.md §6.4),
+    not for chat (which streams via stream_chat)."""
+    response = httpx.post(
+        GENERATE_URL,
+        params={"key": settings.google_api_key},
+        json={"contents": [{"parts": [{"text": prompt}]}]},
+        timeout=60,
+    )
+    if response.status_code >= 400:
+        raise GeminiError(response.status_code, response.text)
+
+    data = response.json()
+    parts = data["candidates"][0]["content"]["parts"]
+    return "".join(part.get("text", "") for part in parts)

@@ -8,6 +8,7 @@ from app.core.security import TokenData, get_current_user
 from app.integrations import anthropic_vision, gemini
 from app.integrations.openai_embeddings import embed_text
 
+from . import retrieval
 from .model import ChatRename, ChatSummary, MessageCreate, MessageResponse
 from .services import (
     DEFAULT_IMAGE_CAPTION,
@@ -67,8 +68,8 @@ def send_message(chat_id: str, body: MessageCreate, current_user: TokenData = De
 
     history = ChatService.list_messages(chat_id)[:-1]
     query_embedding = embed_text(body.content)
-    context_chunks = ChatService.search_context(query_embedding)
-    contents = build_contents(history, context_chunks, body.content)
+    context_chunks, stale_notice = retrieval.search(body.content, query_embedding)
+    contents = build_contents(history, context_chunks, body.content, stale_notice)
 
     def event_stream():
         full_text: list[str] = []
@@ -112,12 +113,14 @@ async def send_image_message(
     history = ChatService.list_messages(chat_id)[:-1]
     if caption:
         query_embedding = embed_text(caption)
-        context_chunks = ChatService.search_context(query_embedding)
+        context_chunks, stale_notice = retrieval.search(caption, query_embedding)
     else:
-        context_chunks = []
+        context_chunks, stale_notice = [], False
 
     image_base64 = base64.b64encode(image_bytes).decode("ascii")
-    messages = build_vision_messages(history, context_chunks, caption or DEFAULT_IMAGE_CAPTION, image_base64, file.content_type)
+    messages = build_vision_messages(
+        history, context_chunks, caption or DEFAULT_IMAGE_CAPTION, image_base64, file.content_type, stale_notice
+    )
 
     def event_stream():
         full_text: list[str] = []

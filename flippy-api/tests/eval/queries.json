@@ -1,0 +1,274 @@
+[
+  {
+    "id": "q001",
+    "query": "¿Cómo viene el mercado de escrituras en la provincia de Buenos Aires en mayo?",
+    "intent_expected": "precio_actual",
+    "category": "dato_mercado",
+    "relevant_doc_names": ["freno-en-escrituras-de-pba.pdf.pdf"],
+    "relevant_chunk_contains": ["9.999 escrituras"],
+    "notes": "Corpus real (NotebookLM, artículo Reporte Inmobiliario)."
+  },
+  {
+    "id": "q002",
+    "query": "¿Cuántas compraventas hubo en marzo en la provincia de Buenos Aires?",
+    "intent_expected": "precio_actual",
+    "category": "dato_mercado",
+    "relevant_doc_names": ["buen-dato-escrituras-en-pba.pdf.pdf"],
+    "relevant_chunk_contains": ["11.000 compraventas"],
+    "notes": "Corpus real."
+  },
+  {
+    "id": "q003",
+    "query": "¿Cómo estuvieron las compraventas en CABA en abril?",
+    "intent_expected": "precio_actual",
+    "category": "dato_mercado",
+    "relevant_doc_names": ["caba-abril-estable-en-compraventas.pdf.pdf"],
+    "relevant_chunk_contains": ["5.472 compraventas"],
+    "notes": "Corpus real."
+  },
+  {
+    "id": "q004",
+    "query": "¿Cuántas escrituras hubo en enero en la provincia de Buenos Aires?",
+    "intent_expected": "precio_actual",
+    "category": "dato_mercado",
+    "relevant_doc_names": ["demanda-no-afloja-en-la-provincia.pdf.pdf"],
+    "relevant_chunk_contains": ["6.459 escrituras"],
+    "notes": "Corpus real."
+  },
+  {
+    "id": "q005",
+    "query": "¿Cuál es el valor promedio del metro cuadrado de un departamento de 2 ambientes en mayo 2026?",
+    "intent_expected": "precio_actual",
+    "category": "dato_mercado",
+    "relevant_doc_names": ["precio-real-de-cierre-por-m-mayo-2026.pdf.pdf"],
+    "relevant_chunk_contains": ["2.174"],
+    "notes": "Corpus real — requiere ventana temporal §7.3 (dato de mayo 2026)."
+  },
+  {
+    "id": "q006",
+    "query": "¿Qué pasó con los valores de venta de departamentos en CABA?",
+    "intent_expected": "precio_actual",
+    "category": "dato_mercado",
+    "relevant_doc_names": ["valores-venta-departamentos-caba.pdf.pdf"],
+    "relevant_chunk_contains": ["36 barrios"],
+    "notes": "Corpus real."
+  },
+  {
+    "id": "q007",
+    "query": "¿Cuánto aumentó el costo de remodelar una cocina en el último año?",
+    "intent_expected": "costo_obra",
+    "category": "costo",
+    "relevant_doc_names": ["costos-para-refaccionar-departamentos.pdf.pdf"],
+    "relevant_chunk_contains": ["16,55%"],
+    "notes": "Corpus real."
+  },
+  {
+    "id": "q008",
+    "query": "¿Cuánto cuesta el aditivo Tacurú Weber de 1 litro?",
+    "intent_expected": "costo_obra",
+    "category": "costo",
+    "relevant_doc_names": ["Listado_de_materiales_y_mano_de_obra_julio_2026_-_Materiales.pdf.pdf"],
+    "relevant_chunk_contains": ["$18.180"],
+    "notes": "Corpus real — listado de precios de materiales."
+  },
+  {
+    "id": "q009",
+    "query": "¿Cómo influye el dólar en los costos de construcción?",
+    "intent_expected": "costo_obra",
+    "category": "costo",
+    "relevant_doc_names": ["construcci-n-el-d-lar-contenido-impulsa-costos-en-alza.pdf.pdf"],
+    "relevant_chunk_contains": ["1.557"],
+    "notes": "Corpus real."
+  },
+  {
+    "id": "q010",
+    "query": "¿Qué costo total tiene el rubro estructura resistente en una vivienda dúplex?",
+    "intent_expected": "costo_obra",
+    "category": "costo",
+    "relevant_doc_names": ["Planilla_Rubros_mod.1-VIV-DUPLEX_Abr2026.pdf.pdf"],
+    "relevant_chunk_contains": ["ESTRUCTURA RESISTENTE"],
+    "notes": "Corpus real — planilla de rubros."
+  },
+  {
+    "id": "q011",
+    "query": "¿Cuánto cuesta el rubro instalaciones sanitarias en la reforma de un baño?",
+    "intent_expected": "costo_obra",
+    "category": "costo",
+    "relevant_doc_names": ["Planilla_Rubros_mod.11-REFORMAS.BANO_Mar2026.pdf.pdf"],
+    "relevant_chunk_contains": ["INSTALACIONES SANITARIAS"],
+    "notes": "Corpus real."
+  },
+  {
+    "id": "q012",
+    "query": "¿Cuánto cuesta el rubro revestimientos en una reforma de cocina?",
+    "intent_expected": "costo_obra",
+    "category": "costo",
+    "relevant_doc_names": ["Planilla_Rubros_mod.12-REFORMAS.COCINA_Mar2026.pdf.pdf"],
+    "relevant_chunk_contains": ["REVESTIMIENTOS"],
+    "notes": "Corpus real."
+  },
+  {
+    "id": "q013",
+    "query": "¿Conviene dejar la estufa instalada o solo la instalación al vender una propiedad flippeada?",
+    "intent_expected": "metodologia",
+    "category": "metodologia",
+    "relevant_doc_names": ["Flipping_Master_La_comunidad_opina_compilado.pdf.pdf"],
+    "relevant_chunk_contains": ["Bruno Coglitore"],
+    "notes": "Corpus real — cápsula de comunidad sobre terminaciones."
+  },
+  {
+    "id": "q014",
+    "query": "¿Conviene dar exclusividad a la inmobiliaria para vender la propiedad?",
+    "intent_expected": "metodologia",
+    "category": "metodologia",
+    "relevant_doc_names": ["Flipping_Master_La_comunidad_opina_compilado.pdf.pdf"],
+    "relevant_chunk_contains": ["buena inmobiliaria"],
+    "notes": "Corpus real."
+  },
+  {
+    "id": "q015",
+    "query": "¿Cómo funciona la seña y la reserva al hacer una oferta por una propiedad?",
+    "intent_expected": "metodologia",
+    "category": "metodologia",
+    "relevant_doc_names": ["Flipping_Master_La_comunidad_opina_compilado.pdf.pdf"],
+    "relevant_chunk_contains": ["Virgilio Raiden"],
+    "notes": "Corpus real."
+  },
+  {
+    "id": "q016",
+    "query": "¿Conviene comprar un departamento en primer piso o en pisos más altos para flippear?",
+    "intent_expected": "metodologia",
+    "category": "metodologia",
+    "relevant_doc_names": ["Flipping_Master_La_comunidad_opina_compilado.pdf.pdf"],
+    "relevant_chunk_contains": ["Lucas Mat"],
+    "notes": "Corpus real."
+  },
+  {
+    "id": "q017",
+    "query": "¿Hay que fijarse en el tipo de acero de la bacha de cocina al reformar?",
+    "intent_expected": "tecnica",
+    "category": "metodologia",
+    "relevant_doc_names": ["Flipping_Master_La_comunidad_opina_compilado.pdf.pdf"],
+    "relevant_chunk_contains": ["bacha"],
+    "notes": "Corpus real. intent_expected='tecnica' porque la heurística de §7.2 prioriza palabras como 'materiales'/'instalación' — riesgo de clasificación conocido, ver DECISIONS.md Incremento 18.6."
+  },
+  {
+    "id": "q018",
+    "query": "¿Conviene usar MDF o aglomerado en los muebles de cocina de un flip?",
+    "intent_expected": "metodologia",
+    "category": "metodologia",
+    "relevant_doc_names": ["Flipping_Master_La_comunidad_opina_compilado.pdf.pdf"],
+    "relevant_chunk_contains": ["MDF"],
+    "notes": "Corpus real."
+  },
+  {
+    "id": "q019",
+    "query": "¿Cuántos kilos de cemento necesito para 5 m3 de hormigón de ripio bruto?",
+    "intent_expected": "tecnica",
+    "category": "tecnica",
+    "relevant_doc_names": ["AREA-CUBICA-AYC-49.pdf.pdf"],
+    "relevant_chunk_contains": ["665 KG de cemento"],
+    "notes": "Corpus real — manual de cálculo de materiales."
+  },
+  {
+    "id": "q020",
+    "query": "¿Cuánto ripio bruto necesito para el ejemplo de cimientos de hormigón?",
+    "intent_expected": "tecnica",
+    "category": "tecnica",
+    "relevant_doc_names": ["AREA-CUBICA-AYC-49.pdf.pdf"],
+    "relevant_chunk_contains": ["ripio bruto"],
+    "notes": "Corpus real."
+  },
+  {
+    "id": "q021",
+    "query": "¿Cuántas bolsas de cemento necesito para 20 m3 de cimientos de hormigón ciclópeo?",
+    "intent_expected": "tecnica",
+    "category": "tecnica",
+    "relevant_doc_names": ["AREA-CUBICA-AYC-49.pdf.pdf"],
+    "relevant_chunk_contains": ["40 bolsas de cemento"],
+    "notes": "Corpus real."
+  },
+  {
+    "id": "q022",
+    "query": "¿Cómo se calculan los materiales para hormigón ciclópeo en cimientos?",
+    "intent_expected": "tecnica",
+    "category": "tecnica",
+    "relevant_doc_names": ["AREA-CUBICA-AYC-49.pdf.pdf"],
+    "relevant_chunk_contains": ["Hormigon ciclopeo", "Hormigón ciclopeo"],
+    "notes": "Corpus real. Dos variantes del término (con/sin tilde) por posible normalización de pdfplumber."
+  },
+  {
+    "id": "q023",
+    "query": "¿Qué establece la Ley 27802 sobre el impuesto cedular?",
+    "intent_expected": "normativa",
+    "category": "normativa",
+    "relevant_doc_names": ["2026_03_06_Ley-27802-26-Informe.pdf.pdf"],
+    "relevant_chunk_contains": ["27802"],
+    "notes": "Corpus real."
+  },
+  {
+    "id": "q024",
+    "query": "¿Qué cláusulas tiene un contrato de locación de obra para una refacción?",
+    "intent_expected": "normativa",
+    "category": "normativa",
+    "relevant_doc_names": [
+      "CONTRATO_DE_LOCACION_DE_OBRA_Entre_el_Sr._._._._._._._._._._._._._._._._,_quien_acredita_identidad_c.pdf"
+    ],
+    "relevant_chunk_contains": ["LOCACION DE OBRA"],
+    "notes": "Corpus real — plantilla de contrato, no normativa estatal, pero es el documento más cercano en el corpus actual a esta categoría."
+  },
+  {
+    "id": "q025",
+    "query": "¿Desde cuándo rige la retroactividad de la ley de ganancias cedulares?",
+    "intent_expected": "normativa",
+    "category": "normativa",
+    "relevant_doc_names": ["2026_03_06_Ley-27802-26-Informe.pdf.pdf"],
+    "relevant_chunk_contains": ["01-01-2026"],
+    "notes": "Corpus real."
+  },
+  {
+    "id": "q026",
+    "query": "¿Qué información tenés sobre el mercado inmobiliario?",
+    "intent_expected": "general",
+    "category": "ambigua_general",
+    "relevant_doc_names": [],
+    "relevant_chunk_contains": [],
+    "notes": "Ambigua a propósito — no se mide recall/mrr, solo que no rompa y clasifique como 'general'."
+  },
+  {
+    "id": "q027",
+    "query": "Contame algo interesante sobre construcción",
+    "intent_expected": "general",
+    "category": "ambigua_general",
+    "relevant_doc_names": [],
+    "relevant_chunk_contains": [],
+    "notes": "Ambigua a propósito."
+  },
+  {
+    "id": "q028",
+    "query": "Hola, ¿qué podés ayudarme a hacer?",
+    "intent_expected": "general",
+    "category": "ambigua_general",
+    "relevant_doc_names": [],
+    "relevant_chunk_contains": [],
+    "notes": "Consulta meta/saludo, sin señales de intención específica."
+  },
+  {
+    "id": "q029",
+    "query": "¿Cuál es la capital de Australia?",
+    "intent_expected": "general",
+    "category": "fuera_de_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_contains": [],
+    "notes": "Fuera del corpus — debe responder 'no tengo información' (criterio de aceptación 'respuestas ancladas', Documento v2 §10)."
+  },
+  {
+    "id": "q030",
+    "query": "¿Cómo cocino una torta de chocolate?",
+    "intent_expected": "general",
+    "category": "fuera_de_corpus",
+    "relevant_doc_names": [],
+    "relevant_chunk_contains": [],
+    "notes": "Fuera del corpus — debe responder 'no tengo información'."
+  }
+]

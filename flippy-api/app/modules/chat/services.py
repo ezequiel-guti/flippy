@@ -1,10 +1,8 @@
-import json
 import uuid
 
 from app.core.db import get_db_connection
 from app.integrations import supabase_storage
 
-TOP_K_CHUNKS = 5
 HISTORY_LIMIT = 10
 TITLE_MAX_LENGTH = 60
 DEFAULT_TITLE = "Nuevo chat"
@@ -216,27 +214,18 @@ class ChatService:
         finally:
             conn.close()
 
-    @staticmethod
-    def search_context(query_embedding: list[float]) -> list[str]:
-        conn = get_db_connection()
-        try:
-            with conn.cursor() as cur:
-                cur.execute(
-                    """
-                    select content from document_chunks
-                    order by embedding <=> %s::vector
-                    limit %s
-                    """,
-                    (json.dumps(query_embedding), TOP_K_CHUNKS),
-                )
-                rows = cur.fetchall()
-        finally:
-            conn.close()
 
-        return [r[0] for r in rows]
+STALE_DATA_NOTICE = (
+    "Nota: no se encontraron suficientes datos recientes para esta consulta y se ampliaron los "
+    "resultados a información más antigua (cada dato de mercado incluye su fecha de vigencia). "
+    "Si corresponde, advertí al usuario que la información podría estar desactualizada — sin "
+    "mencionar de dónde proviene ni citar el nombre de ningún documento."
+)
 
 
-def build_contents(history: list[dict], context_chunks: list[str], user_message: str) -> list[dict]:
+def build_contents(
+    history: list[dict], context_chunks: list[str], user_message: str, stale_notice: bool = False
+) -> list[dict]:
     """Builds the Gemini `contents` array: prior turns + a final user turn carrying RAG context."""
     contents = [
         {"role": "user" if m["role"] == "user" else "model", "parts": [{"text": m["content"]}]}
@@ -245,6 +234,8 @@ def build_contents(history: list[dict], context_chunks: list[str], user_message:
 
     if context_chunks:
         context_block = "\n\n---\n\n".join(context_chunks)
+        if stale_notice:
+            context_block += f"\n\n{STALE_DATA_NOTICE}"
     else:
         context_block = "(sin resultados relevantes en el corpus)"
 
@@ -259,6 +250,7 @@ def build_vision_messages(
     user_text: str,
     image_base64: str,
     image_media_type: str,
+    stale_notice: bool = False,
 ) -> list[dict]:
     """Builds the Anthropic `messages` array for F-04: prior text turns + a final user turn
     carrying the attached image plus whatever RAG context matched the caption text."""
@@ -269,6 +261,8 @@ def build_vision_messages(
 
     if context_chunks:
         context_block = "\n\n---\n\n".join(context_chunks)
+        if stale_notice:
+            context_block += f"\n\n{STALE_DATA_NOTICE}"
     else:
         context_block = "(sin resultados relevantes en el corpus)"
 

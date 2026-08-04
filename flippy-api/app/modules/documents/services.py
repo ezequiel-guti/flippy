@@ -8,7 +8,8 @@ from app.core.db import get_db_connection
 from app.integrations import supabase_storage
 from app.integrations.openai_embeddings import embed_texts
 
-from .chunking import chunk_text
+from .chunking import DocumentMeta, chunk_document, count_tokens, enrich_with_header
+from .metadata import extract_metadata
 from .parsers import extract_text
 
 VECTORIZABLE_TYPES = {"pdf", "docx", "txt", "json", "html"}
@@ -61,7 +62,7 @@ class DocumentsService:
         return {"id": doc_id, "name": name, "type": doc_type, "storage_path": storage_path, "folder_id": folder_id}
 
     @staticmethod
-    def process_document(doc_id: str, content: bytes, doc_type: str) -> None:
+    def process_document(doc_id: str, content: bytes, doc_type: str, name: str) -> None:
         """Runs as a FastAPI background task after the upload response was sent."""
         conn = get_db_connection()
         try:
@@ -75,7 +76,9 @@ class DocumentsService:
                 return
 
             text = extract_text(content, doc_type)
-            chunks = chunk_text(text)
+            doc_meta = DocumentMeta(filename=name, mime_type=CONTENT_TYPES[doc_type])
+            result = chunk_document(text, doc_meta)
+            chunks = result.chunks
 
             if not chunks:
                 with conn.cursor() as cur:
@@ -86,20 +89,58 @@ class DocumentsService:
                 conn.commit()
                 return
 
-            embeddings = embed_texts(chunks)
+            doc_metadata = extract_metadata(text, name)
+            for chunk in chunks:
+                chunk.fecha_vigencia = doc_metadata.fecha_vigencia
+                chunk.tipo = doc_metadata.tipo
+                chunk.moneda = doc_metadata.moneda
+                chunk.region = doc_metadata.region
+                chunk.es_primaria = doc_metadata.es_primaria
+                enrich_with_header(chunk, name)
+
+            embeddings = embed_texts([c.embeddable_text for c in chunks])
 
             with conn.cursor() as cur:
-                for index, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
+                for chunk, embedding in zip(chunks, embeddings):
                     cur.execute(
                         """
-                        insert into document_chunks (document_id, content, embedding, chunk_index, metadata)
-                        values (%s, %s, %s::vector, %s, %s)
+                        insert into document_chunks
+                            (document_id, content, embedding, chunk_index, metadata, token_count,
+                             fecha_vigencia, tipo, moneda, region, es_primaria, header_text)
+                        values (%s, %s, %s::vector, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                         """,
-                        (doc_id, chunk, json.dumps(embedding), index, Json({})),
+                        (
+                            doc_id,
+                            chunk.content,
+                            json.dumps(embedding),
+                            chunk.chunk_index,
+                            Json({}),
+                            chunk.token_count,
+                            chunk.fecha_vigencia,
+                            chunk.tipo,
+                            chunk.moneda,
+                            chunk.region,
+                            chunk.es_primaria,
+                            chunk.header_text,
+                        ),
                     )
                 cur.execute(
-                    "update documents set status = 'ready', chunk_count = %s, error_detail = null where id = %s",
-                    (len(chunks), doc_id),
+                    """
+                    update documents
+                    set status = 'ready', chunk_count = %s, error_detail = null,
+                        strategy = %s, strategy_source = %s, strategy_reason = %s,
+                        token_count = %s, indexed_at = now(), needs_review = %s
+                    where id = %s
+                    """,
+                    (
+                        len(chunks),
+                        result.strategy.value,
+                        result.strategy_source,
+                        result.strategy_reason,
+                        count_tokens(text),
+                        doc_metadata.needs_review,
+                        doc_id,
+                    ),
                 )
             conn.commit()
         except Exception as exc:

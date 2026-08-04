@@ -46,7 +46,7 @@ async def upload_document(
     if len(content) > MAX_FILE_SIZE_BYTES:
         raise HTTPException(status_code=413, detail="Archivo demasiado grande (máximo 20 MB)")
     created = DocumentsService.create_document(file.filename, doc_type, content, folder_id)
-    background_tasks.add_task(DocumentsService.process_document, created["id"], content, doc_type)
+    background_tasks.add_task(DocumentsService.process_document, created["id"], content, doc_type, created["name"])
 
     now = datetime.now(timezone.utc).isoformat()
     return {
@@ -88,7 +88,7 @@ def reprocess_document(
         raise HTTPException(status_code=404, detail="Documento no encontrado")
 
     background_tasks.add_task(
-        DocumentsService.process_document, document_id, prepared["content"], prepared["type"]
+        DocumentsService.process_document, document_id, prepared["content"], prepared["type"], prepared["name"]
     )
 
     now = datetime.now(timezone.utc).isoformat()

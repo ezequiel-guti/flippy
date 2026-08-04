@@ -144,7 +144,7 @@ def test_failed_processing_stores_error_detail(auth_headers):
     doc_id = created["id"]
 
     with pytest.raises(Exception):
-        DocumentsService.process_document(doc_id, invalid_pdf, "pdf")
+        DocumentsService.process_document(doc_id, invalid_pdf, "pdf", "invalido.pdf")
 
     list_response = client.get("/api/v1/admin/documents", headers=auth_headers)
     doc = next(d for d in list_response.json() if d["id"] == doc_id)

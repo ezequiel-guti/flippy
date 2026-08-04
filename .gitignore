@@ -11,6 +11,8 @@ flippy-api/__pycache__/
 flippy-api/**/__pycache__/
 flippy-api/.pytest_cache/
 flippy-api/.env
+flippy-api/.env.*
+!flippy-api/.env.example
 
 # flippy-web
 flippy-web/node_modules/
