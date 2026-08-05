@@ -30,6 +30,7 @@ interface AdminDocumentTableProps {
   onReprocess: (id: string) => void;
   onDownload: (id: string) => void;
   reprocessingIds?: Set<string>;
+  deletingIds?: Set<string>;
   folders?: DocumentFolder[];
   onMove?: (documentId: string, folderId: string | null) => void;
   /** Full corpus to search across when the query is non-empty — lets search
@@ -58,6 +59,7 @@ export default function AdminDocumentTable({
   onReprocess,
   onDownload,
   reprocessingIds,
+  deletingIds,
   folders = [],
   onMove,
   searchScope,
@@ -223,7 +225,14 @@ export default function AdminDocumentTable({
                       {reprocessingIds?.has(doc.id) && <span className={styles.spinner} aria-hidden="true" />}
                       Reprocesar
                     </button>
-                    <button type="button" className={styles.deleteButton} onClick={() => onDelete(doc.id)}>
+                    <button
+                      type="button"
+                      className={styles.deleteButton}
+                      onClick={() => onDelete(doc.id)}
+                      disabled={deletingIds?.has(doc.id)}
+                      aria-label={`Eliminar ${doc.name}`}
+                    >
+                      {deletingIds?.has(doc.id) && <span className={styles.spinnerError} aria-hidden="true" />}
                       Eliminar
                     </button>
                   </div>

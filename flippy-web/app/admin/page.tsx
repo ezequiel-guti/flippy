@@ -26,6 +26,7 @@ export default function AdminPage() {
   const [isUploadPanelOpen, setIsUploadPanelOpen] = useState(false);
   const [reprocessingIds, setReprocessingIds] = useState<Set<string>>(new Set());
   const [deletingFolderIds, setDeletingFolderIds] = useState<Set<string>>(new Set());
+  const [deletingDocumentIds, setDeletingDocumentIds] = useState<Set<string>>(new Set());
 
   async function loadFolders() {
     const data = await apiGet<DocumentFolder[]>("/api/v1/admin/folders");
@@ -77,12 +78,18 @@ export default function AdminPage() {
   }
 
   async function handleDelete(id: string) {
-    setAllDocuments((prev) => prev.filter((d) => d.id !== id));
+    setDeletingDocumentIds((prev) => new Set(prev).add(id));
     try {
       await apiDelete(`/api/v1/admin/documents/${id}`);
+      setAllDocuments((prev) => prev.filter((d) => d.id !== id));
     } catch {
       setError("No pudimos eliminar el documento. Refrescá la página.");
-      await loadDocuments();
+    } finally {
+      setDeletingDocumentIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     }
   }
 
@@ -224,6 +231,7 @@ export default function AdminPage() {
                   onReprocess={handleReprocess}
                   onDownload={handleDownload}
                   reprocessingIds={reprocessingIds}
+                  deletingIds={deletingDocumentIds}
                   folders={folders}
                   onMove={handleMoveDocument}
                 />

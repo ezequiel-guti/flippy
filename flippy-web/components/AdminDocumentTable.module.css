@@ -225,6 +225,9 @@
 }
 
 .deleteButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-family: var(--font-secondary);
   font-size: var(--font-size-label);
   color: var(--color-error);
@@ -235,8 +238,13 @@
   cursor: pointer;
 }
 
-.deleteButton:hover {
+.deleteButton:hover:not(:disabled) {
   background: rgba(179, 38, 30, 0.08);
+}
+
+.deleteButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .actions {
@@ -289,6 +297,16 @@
   height: 11px;
   border: 2px solid rgba(139, 46, 59, 0.3);
   border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+.spinnerError {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border: 2px solid rgba(179, 38, 30, 0.3);
+  border-top-color: var(--color-error);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }

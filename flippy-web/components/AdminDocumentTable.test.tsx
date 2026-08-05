@@ -44,6 +44,21 @@ describe("AdminDocumentTable", () => {
     expect(onDelete).toHaveBeenCalledWith("1");
   });
 
+  it("shows a spinner and disables the button while a document is being deleted", () => {
+    render(
+      <AdminDocumentTable
+        documents={documents}
+        onDelete={jest.fn()}
+        onReprocess={jest.fn()}
+        onDownload={jest.fn()}
+        deletingIds={new Set(["1"])}
+      />
+    );
+    const button = screen.getByLabelText(/eliminar manual.pdf/i);
+    expect(button).toBeDisabled();
+    expect(button.querySelector('[aria-hidden="true"]')).toBeInTheDocument();
+  });
+
   it("calls onDownload with the document id", () => {
     const onDownload = jest.fn();
     render(
