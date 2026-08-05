@@ -25,6 +25,7 @@ export default function AdminPage() {
   const [folderError, setFolderError] = useState<string | null>(null);
   const [isUploadPanelOpen, setIsUploadPanelOpen] = useState(false);
   const [reprocessingIds, setReprocessingIds] = useState<Set<string>>(new Set());
+  const [deletingFolderIds, setDeletingFolderIds] = useState<Set<string>>(new Set());
 
   async function loadFolders() {
     const data = await apiGet<DocumentFolder[]>("/api/v1/admin/folders");
@@ -152,6 +153,7 @@ export default function AdminPage() {
   }
 
   async function handleDeleteFolder(folderId: string) {
+    setDeletingFolderIds((prev) => new Set(prev).add(folderId));
     try {
       await apiDelete(`/api/v1/admin/folders/${folderId}`);
       setFolderError(null);
@@ -162,6 +164,12 @@ export default function AdminPage() {
       } else {
         setFolderError("No pudimos eliminar la carpeta.");
       }
+    } finally {
+      setDeletingFolderIds((prev) => {
+        const next = new Set(prev);
+        next.delete(folderId);
+        return next;
+      });
     }
   }
 
@@ -185,6 +193,7 @@ export default function AdminPage() {
             onRename={handleRenameFolder}
             onDelete={handleDeleteFolder}
             error={folderError}
+            deletingIds={deletingFolderIds}
           />
           <main className={styles.mainPane}>
             <AdminUploadForm

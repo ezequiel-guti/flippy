@@ -12,6 +12,7 @@ interface AdminFolderPanelProps {
   onRename: (folderId: string, name: string) => Promise<void>;
   onDelete: (folderId: string) => Promise<void>;
   error?: string | null;
+  deletingIds?: Set<string>;
 }
 
 function RootIcon() {
@@ -48,6 +49,7 @@ export default function AdminFolderPanel({
   onRename,
   onDelete,
   error,
+  deletingIds,
 }: AdminFolderPanelProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [isCreating, setIsCreating] = useState(false);
@@ -114,6 +116,7 @@ export default function AdminFolderPanel({
     const hasChildren = kids.length > 0;
     const isExpanded = expandedIds.has(folder.id);
     const isActive = currentFolderId === folder.id;
+    const isDeleting = deletingIds?.has(folder.id) ?? false;
 
     if (renamingId === folder.id) {
       return (
@@ -137,12 +140,13 @@ export default function AdminFolderPanel({
           <button type="button" className={styles.nodeLabel} onClick={() => onNavigate(folder.id)}>
             <span className={styles.folderName}>{folder.name}</span>
           </button>
-          <div className={styles.nodeActions}>
+          <div className={`${styles.nodeActions} ${isDeleting ? styles.nodeActionsVisible : ""}`}>
             <button
               type="button"
               className={styles.nodeActionButton}
               onClick={() => startRename(folder)}
               aria-label={`Renombrar ${folder.name}`}
+              disabled={isDeleting}
             >
               ✎
             </button>
@@ -151,8 +155,9 @@ export default function AdminFolderPanel({
               className={styles.nodeActionButton}
               onClick={() => onDelete(folder.id)}
               aria-label={`Eliminar ${folder.name}`}
+              disabled={isDeleting}
             >
-              ✕
+              {isDeleting ? <span className={styles.spinner} aria-hidden="true" /> : "✕"}
             </button>
           </div>
           <button

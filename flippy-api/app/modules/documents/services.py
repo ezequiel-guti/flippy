@@ -8,7 +8,7 @@ from app.core.db import get_db_connection
 from app.integrations import supabase_storage
 from app.integrations.openai_embeddings import embed_texts
 
-from .chunking import DocumentMeta, chunk_document, count_tokens, enrich_with_header
+from .chunking import Chunk, DocumentMeta, chunk_document, count_tokens, enrich_with_header
 from .metadata import extract_metadata
 from .parsers import extract_text
 
@@ -23,6 +23,31 @@ CONTENT_TYPES = {
     "html": "text/html",
     "image": "application/octet-stream",
 }
+
+
+EMBEDDING_BATCH_TOKEN_LIMIT = 250_000  # safety margin under OpenAI's 300k-tokens-per-request cap
+EMBEDDING_BATCH_MAX_ITEMS = 500
+
+
+def _embed_in_batches(chunks: list[Chunk]) -> list[list[float]]:
+    """Splits embed_texts calls so a single large document never exceeds OpenAI's
+    per-request token limit — a real corpus PDF hit this with 895k tokens in one call."""
+    embeddings: list[list[float]] = []
+    batch: list[str] = []
+    batch_tokens = 0
+    for chunk in chunks:
+        if batch and (
+            batch_tokens + chunk.token_count > EMBEDDING_BATCH_TOKEN_LIMIT
+            or len(batch) >= EMBEDDING_BATCH_MAX_ITEMS
+        ):
+            embeddings.extend(embed_texts(batch))
+            batch = []
+            batch_tokens = 0
+        batch.append(chunk.embeddable_text)
+        batch_tokens += chunk.token_count
+    if batch:
+        embeddings.extend(embed_texts(batch))
+    return embeddings
 
 
 def _sanitize_filename(name: str) -> str:
@@ -98,7 +123,7 @@ class DocumentsService:
                 chunk.es_primaria = doc_metadata.es_primaria
                 enrich_with_header(chunk, name)
 
-            embeddings = embed_texts([c.embeddable_text for c in chunks])
+            embeddings = _embed_in_batches(chunks)
 
             with conn.cursor() as cur:
                 for chunk, embedding in zip(chunks, embeddings):

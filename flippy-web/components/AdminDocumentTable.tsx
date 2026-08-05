@@ -161,7 +161,14 @@ export default function AdminDocumentTable({
           <tbody>
             {pageItems.map((doc) => (
               <tr key={doc.id}>
-                <td>{doc.name}</td>
+                <td>
+                  {doc.name}
+                  {doc.status === "error" && doc.error_detail && (
+                    <div className={styles.errorDetail} title={doc.error_detail}>
+                      {doc.error_detail}
+                    </div>
+                  )}
+                </td>
                 <td>{doc.type}</td>
                 <td>
                   <span

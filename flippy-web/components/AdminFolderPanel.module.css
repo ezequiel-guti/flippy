@@ -95,7 +95,14 @@
   display: flex;
 }
 
+.nodeActionsVisible {
+  display: flex;
+}
+
 .nodeActionButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: none;
   border: none;
   color: var(--color-text-secondary);
@@ -105,9 +112,30 @@
   border-radius: 4px;
 }
 
-.nodeActionButton:hover {
+.nodeActionButton:hover:not(:disabled) {
   background: rgba(43, 43, 45, 0.1);
   color: var(--color-text-primary);
+}
+
+.nodeActionButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.spinner {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 2px solid rgba(139, 46, 59, 0.3);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .chevron {

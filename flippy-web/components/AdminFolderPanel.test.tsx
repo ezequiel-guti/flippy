@@ -105,4 +105,22 @@ describe("AdminFolderPanel", () => {
     );
     expect(screen.getByText(/la carpeta no está vacía/i)).toBeInTheDocument();
   });
+
+  it("shows a spinner and disables actions while a folder is being deleted", () => {
+    render(
+      <AdminFolderPanel
+        folders={folders}
+        currentFolderId={null}
+        onNavigate={jest.fn()}
+        onCreate={jest.fn()}
+        onRename={jest.fn()}
+        onDelete={jest.fn()}
+        deletingIds={new Set(["f1"])}
+      />
+    );
+    const deleteButton = screen.getByLabelText("Eliminar Presupuestos");
+    expect(deleteButton).toBeDisabled();
+    expect(deleteButton.querySelector('[aria-hidden="true"]')).toBeInTheDocument();
+    expect(screen.getByLabelText("Renombrar Presupuestos")).toBeDisabled();
+  });
 });

@@ -158,6 +158,18 @@
   word-break: break-word;
 }
 
+.errorDetail {
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: var(--color-error);
+  white-space: normal;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .colType {
   width: 70px;
 }
