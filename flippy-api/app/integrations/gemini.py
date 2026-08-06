@@ -6,7 +6,7 @@ import httpx
 
 from app.core.config import settings
 
-MODEL = "gemini-2.5-flash"
+MODEL = "gemini-flash-latest"
 BASE_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:streamGenerateContent"
 GENERATE_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent"
 

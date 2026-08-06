@@ -586,3 +586,15 @@ Racional: pedido directo del desarrollador, mismo patrón ya aplicado a la elimi
 Alternativas consideradas: mantener el borrado optimista y solo agregar un toast/notificación aparte (descartado — no resuelve la falta de feedback inmediato en la fila misma, e introduce un patrón de notificación nuevo no usado en el resto del panel); usar el mismo spinner vino que "Reprocesar" en vez de uno rojo (descartado — el botón "Eliminar" ya usa `--color-error` consistentemente, un spinner vino desentonaría).
 Impacto: `admin/page.tsx` — estado `deletingDocumentIds`, `handleDelete` reescrito. `AdminDocumentTable.tsx` — prop `deletingIds`, `aria-label` agregado al botón Eliminar (antes no lo tenía), spinner condicional. `AdminDocumentTable.module.css` — `.deleteButton` pasa a `inline-flex` con estado `:disabled`, nueva clase `.spinnerError`. 2 tests Jest nuevos, 75/75 total, build de producción limpio.
 ════════════════════════════════════════════════════════
+
+════════════════════════════════════════════════════════
+📋 HUB BLOCK — DECISIONS_FLIPPY.md
+════════════════════════════════════════════════════════
+Fecha: 2026-08-06
+Incremento: 22 — Fix modelo Gemini desactualizado tras rotación de API keys
+Modelo: claude-sonnet-5
+Decisión: Cambiar `MODEL` en `app/integrations/gemini.py` de `gemini-2.5-flash` a `gemini-flash-latest`.
+Racional: Con la GOOGLE_API_KEY nueva, `gemini-2.5-flash` responde 404 "no longer available to new users" (Google restringió el modelo para proyectos nuevos, aunque siga listado por ListModels). Probado en vivo: `gemini-flash-latest` y `gemini-3.5-flash` responden 200; `gemini-2.0-flash-001` no tiene cuota en el plan gratuito. Se eligió el alias `-latest` (no una versión pineada) para que Google lo mantenga apuntando al Flash vigente y evitar que esto se repita en la próxima rotación de key — tercera vez que un modelo hardcodeado de Google/Anthropic queda obsoleto sin aviso (ver Incrementos 7 y 9.1).
+Alternativas consideradas: Pinear `gemini-3.5-flash` explícito — comportamiento más predecible pero con el mismo riesgo de quedar deprecado sin aviso; descartado a favor de la recomendación por el desarrollador.
+Impacto: `flippy-api/app/integrations/gemini.py` (1 línea). Sin migración de DB. Verificado con 30/30 tests de `test_chat.py`/`test_metadata.py` en verde (suite llama a la API real de OpenAI para embeddings, confirmando de paso que las tres keys rotadas autentican correctamente una vez sincronizadas entre Railway y `.env` local).
+════════════════════════════════════════════════════════
