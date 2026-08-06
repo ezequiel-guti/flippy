@@ -7,6 +7,7 @@ interface ChatMessageProps {
 
 export default function ChatMessage({ message }: ChatMessageProps) {
   const isUser = message.role === "user";
+  const isPendingAssistantReply = !isUser && message.content === "";
 
   return (
     <div
@@ -18,7 +19,11 @@ export default function ChatMessage({ message }: ChatMessageProps) {
         // eslint-disable-next-line @next/next/no-img-element
         <img src={message.imageUrl} alt="Imagen adjunta por el usuario" className={styles.image} />
       )}
-      <p>{message.content}</p>
+      {isPendingAssistantReply ? (
+        <span className={styles.spinner} aria-hidden="true" />
+      ) : (
+        <p>{message.content}</p>
+      )}
     </div>
   );
 }

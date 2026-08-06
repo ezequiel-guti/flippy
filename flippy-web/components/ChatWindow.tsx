@@ -7,6 +7,7 @@ import ChatMessage from "./ChatMessage";
 import ChatChips from "./ChatChips";
 import ChatInput from "./ChatInput";
 import ChatHeader from "./ChatHeader";
+import LoadingSpinner from "./LoadingSpinner";
 import styles from "./ChatWindow.module.css";
 
 const STARTER_SUGGESTIONS = ["¿Cómo calculo el ROI de un flip?", "Ideas para remodelar"];
@@ -14,11 +15,18 @@ const STARTER_SUGGESTIONS = ["¿Cómo calculo el ROI de un flip?", "Ideas para r
 interface ChatWindowProps {
   chatId: string;
   initialMessages: ChatMessageData[];
+  isLoadingMessages?: boolean;
   onOpenHistory: () => void;
   onMessageSent?: () => void;
 }
 
-export default function ChatWindow({ chatId, initialMessages, onOpenHistory, onMessageSent }: ChatWindowProps) {
+export default function ChatWindow({
+  chatId,
+  initialMessages,
+  isLoadingMessages = false,
+  onOpenHistory,
+  onMessageSent,
+}: ChatWindowProps) {
   const [messages, setMessages] = useState<ChatMessageData[]>(initialMessages);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -105,13 +113,18 @@ export default function ChatWindow({ chatId, initialMessages, onOpenHistory, onM
     <div className={styles.window}>
       <ChatHeader onOpenHistory={onOpenHistory} />
       <div className={styles.messages} role="log" aria-live="polite">
-        {messages.length === 0 ? (
+        {isLoadingMessages ? (
+          <div className={styles.messagesLoading}>
+            <LoadingSpinner label="Cargando mensajes…" />
+          </div>
+        ) : messages.length === 0 ? (
           <p className={styles.emptyState}>Hola, soy Flippy. Te ayudo en lo que necesites.</p>
         ) : (
           messages.map((message) => <ChatMessage key={message.id} message={message} />)
         )}
-        {showStarterChips && <ChatChips suggestions={STARTER_SUGGESTIONS} onSelect={(s) => sendMessage(s, null)} />}
-        {isSending && <p className={styles.loadingIndicator}>Flippy está escribiendo…</p>}
+        {!isLoadingMessages && showStarterChips && (
+          <ChatChips suggestions={STARTER_SUGGESTIONS} onSelect={(s) => sendMessage(s, null)} />
+        )}
         {error && (
           <p className={styles.errorMessage} role="alert">
             {error}

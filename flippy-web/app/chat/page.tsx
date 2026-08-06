@@ -48,6 +48,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessageData[]>([]);
   const [userName, setUserName] = useState("Vos");
   const [isLoading, setIsLoading] = useState(true);
+  const [isMessagesLoading, setIsMessagesLoading] = useState(false);
   const [showHistoryOnMobile, setShowHistoryOnMobile] = useState(false);
 
   function redirectOnAuthError(err: unknown): boolean {
@@ -84,9 +85,11 @@ export default function ChatPage() {
 
   useEffect(() => {
     if (!activeChatId) return;
+    setIsMessagesLoading(true);
     apiGet<RawMessage[]>(`/api/v1/chats/${activeChatId}/messages`)
       .then((raw) => setMessages(raw.map(toChatMessage)))
-      .catch(redirectOnAuthError);
+      .catch(redirectOnAuthError)
+      .finally(() => setIsMessagesLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeChatId]);
 
@@ -167,6 +170,7 @@ export default function ChatPage() {
             key={activeChatId}
             chatId={activeChatId}
             initialMessages={messages}
+            isLoadingMessages={isMessagesLoading}
             onOpenHistory={() => setShowHistoryOnMobile(true)}
             onMessageSent={refreshChats}
           />

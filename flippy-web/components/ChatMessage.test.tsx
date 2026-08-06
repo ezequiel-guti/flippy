@@ -25,4 +25,17 @@ describe("ChatMessage", () => {
     render(<ChatMessage message={message} />);
     expect(screen.getByLabelText("Respuesta de Flippy")).toBeInTheDocument();
   });
+
+  it("shows a spinner instead of an empty paragraph for a pending assistant reply", () => {
+    const message: ChatMessageData = {
+      id: "3",
+      role: "assistant",
+      content: "",
+      createdAt: "2026-07-10T00:00:00Z",
+    };
+    render(<ChatMessage message={message} />);
+    const bubble = screen.getByLabelText("Respuesta de Flippy");
+    expect(bubble.querySelector("p")).not.toBeInTheDocument();
+    expect(bubble.querySelector('[aria-hidden="true"]')).toBeInTheDocument();
+  });
 });

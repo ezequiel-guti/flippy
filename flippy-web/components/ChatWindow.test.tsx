@@ -87,4 +87,32 @@ describe("ChatWindow", () => {
     fireEvent.click(screen.getByLabelText("Ver historial de chats"));
     expect(onOpenHistory).toHaveBeenCalledTimes(1);
   });
+
+  it("shows a spinner in the assistant bubble before the first streamed chunk arrives", async () => {
+    let pushChunk: (chunk: string) => void = () => {};
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        pushChunk = (chunk: string) => controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: chunk })}\n\n`));
+      },
+    });
+    (apiStream as jest.Mock).mockResolvedValue(stream);
+    render(<ChatWindow chatId="chat-1" initialMessages={[]} onOpenHistory={jest.fn()} />);
+
+    fireEvent.change(screen.getByLabelText(/escribí tu consulta/i), { target: { value: "Hola" } });
+    fireEvent.click(screen.getByLabelText("Enviar"));
+
+    const assistantBubble = await waitFor(() => screen.getByLabelText("Respuesta de Flippy"));
+    expect(assistantBubble.querySelector('[aria-hidden="true"]')).toBeInTheDocument();
+
+    pushChunk("Hola de vuelta");
+    await waitFor(() => expect(screen.getByText("Hola de vuelta")).toBeInTheDocument());
+    expect(assistantBubble.querySelector('[aria-hidden="true"]')).not.toBeInTheDocument();
+  });
+
+  it("shows a loading spinner instead of messages while isLoadingMessages is true", () => {
+    render(<ChatWindow chatId="chat-1" initialMessages={[]} isLoadingMessages onOpenHistory={jest.fn()} />);
+    expect(screen.getByText(/cargando mensajes/i)).toBeInTheDocument();
+    expect(screen.queryByText(/hola, soy flippy/i)).not.toBeInTheDocument();
+  });
 });

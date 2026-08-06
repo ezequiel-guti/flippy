@@ -598,3 +598,15 @@ Racional: Con la GOOGLE_API_KEY nueva, `gemini-2.5-flash` responde 404 "no longe
 Alternativas consideradas: Pinear `gemini-3.5-flash` explícito — comportamiento más predecible pero con el mismo riesgo de quedar deprecado sin aviso; descartado a favor de la recomendación por el desarrollador.
 Impacto: `flippy-api/app/integrations/gemini.py` (1 línea). Sin migración de DB. Verificado con 30/30 tests de `test_chat.py`/`test_metadata.py` en verde (suite llama a la API real de OpenAI para embeddings, confirmando de paso que las tres keys rotadas autentican correctamente una vez sincronizadas entre Railway y `.env` local).
 ════════════════════════════════════════════════════════
+
+════════════════════════════════════════════════════════
+📋 HUB BLOCK — DECISIONS_FLIPPY.md
+════════════════════════════════════════════════════════
+Fecha: 2026-08-06
+Incremento: 23 — Spinner en respuesta pendiente del chat y al cambiar de conversación
+Modelo: claude-sonnet-5
+Decisión: `ChatMessage` muestra un spinner en vez de un `<p></p>` vacío cuando la burbuja del assistant todavía no recibió el primer chunk de streaming; `chat/page.tsx`/`ChatWindow` agregan un spinner (`isLoadingMessages`) mientras se piden los mensajes de un chat al cambiarlo desde el sidebar.
+Racional: El desarrollador reportó dos síntomas separados ("se ve abajo una parte sin nada" al cargar un mensaje, y pidió un spinner mientras cargan los mensajes) que resultaron ser la misma causa raíz — `sendMessage` empuja la burbuja del asistente con `content: ""` antes del primer chunk, y esa burbuja vacía era la "parte sin nada" reportada; el único indicador existente era un texto italic debajo de la burbuja, fácil de pasar por alto. Se aprovechó el mismo arreglo para cubrir también el cambio de chat, que no tenía ningún indicador de carga.
+Alternativas consideradas: Mantener el texto "Flippy está escribiendo…" además del spinner en la burbuja — descartado por redundante una vez que la burbuja ya comunica claramente que hay una respuesta en curso.
+Impacto: `flippy-web/components/ChatMessage.tsx`, `ChatMessage.module.css`, `ChatWindow.tsx`, `ChatWindow.module.css`, `app/chat/page.tsx`. Sin cambios de backend ni de API. 4 tests Jest nuevos, 78/78 en verde, `tsc --noEmit` y build de producción limpios.
+════════════════════════════════════════════════════════
