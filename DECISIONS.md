@@ -610,3 +610,15 @@ Racional: El desarrollador reportó dos síntomas separados ("se ve abajo una pa
 Alternativas consideradas: Mantener el texto "Flippy está escribiendo…" además del spinner en la burbuja — descartado por redundante una vez que la burbuja ya comunica claramente que hay una respuesta en curso.
 Impacto: `flippy-web/components/ChatMessage.tsx`, `ChatMessage.module.css`, `ChatWindow.tsx`, `ChatWindow.module.css`, `app/chat/page.tsx`. Sin cambios de backend ni de API. 4 tests Jest nuevos, 78/78 en verde, `tsc --noEmit` y build de producción limpios.
 ════════════════════════════════════════════════════════
+
+════════════════════════════════════════════════════════
+📋 HUB BLOCK — DECISIONS_FLIPPY.md
+════════════════════════════════════════════════════════
+Fecha: 2026-08-06
+Incremento: 24 — Conversación anclada abajo en vez de hueco vacío
+Modelo: claude-sonnet-5
+Decisión: `.messages` en `ChatWindow.module.css` pasa a `justify-content: flex-end`, anclando los mensajes al fondo del contenedor en vez de apilarlos desde arriba.
+Racional: El desarrollador siguió viendo un "hueco vacío" debajo del chat después del fix de la burbuja vacía (Incremento 23), que era un bug distinto. En vez de seguir adivinando, pidió inspeccionar el DOM por DevTools: la captura confirmó que `<html>` mide exactamente el alto del viewport (el layout `height: 100vh` funciona correctamente, no hay overflow roto). La causa real era que `.messages` (flex-column sin `justify-content`) apila los mensajes desde arriba — en conversaciones cortas sobra espacio visible debajo del último mensaje, en vez de quedar pegado al input como en WhatsApp/iMessage.
+Alternativas consideradas: Ninguna — es el patrón estándar para anclar contenido al fondo de un contenedor flex-column con overflow, sin afectar el scroll cuando la conversación sí excede la altura visible.
+Impacto: `flippy-web/components/ChatWindow.module.css` (1 línea, `justify-content: flex-end`). Sin cambios de lógica ni de DOM — 7/7 tests de `ChatWindow` sin cambios, build de producción limpio.
+════════════════════════════════════════════════════════
