@@ -1,3 +1,5 @@
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import type { ChatMessageData } from "@/types/chat";
 import styles from "./ChatMessage.module.css";
 
@@ -21,8 +23,12 @@ export default function ChatMessage({ message }: ChatMessageProps) {
       )}
       {isPendingAssistantReply ? (
         <span className={styles.spinner} aria-hidden="true" />
-      ) : (
+      ) : isUser ? (
         <p>{message.content}</p>
+      ) : (
+        <div className={styles.markdown}>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+        </div>
       )}
     </div>
   );

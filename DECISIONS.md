@@ -622,3 +622,15 @@ Racional: El desarrollador siguió viendo un "hueco vacío" debajo del chat desp
 Alternativas consideradas: Ninguna — es el patrón estándar para anclar contenido al fondo de un contenedor flex-column con overflow, sin afectar el scroll cuando la conversación sí excede la altura visible.
 Impacto: `flippy-web/components/ChatWindow.module.css` (1 línea, `justify-content: flex-end`). Sin cambios de lógica ni de DOM — 7/7 tests de `ChatWindow` sin cambios, build de producción limpio.
 ════════════════════════════════════════════════════════
+
+════════════════════════════════════════════════════════
+📋 HUB BLOCK — DECISIONS_FLIPPY.md
+════════════════════════════════════════════════════════
+Fecha: 2026-08-06
+Incremento: 25 — Renderizado de Markdown en las respuestas del chat
+Modelo: claude-sonnet-5
+Decisión: `ChatMessage.tsx` renderiza las respuestas del asistente con `react-markdown` + `remark-gfm` (elementos React reales, sin `dangerouslySetInnerHTML`) en vez de texto plano. `next.config.mjs` declara `transpilePackages` con el árbol completo de dependencias ESM de esas librerías para que `next/jest` pueda transformarlas.
+Racional: El desarrollador vio los símbolos de Markdown sin procesar en el chat (Gemini responde en Markdown por defecto). Se descartó la alternativa de pedirle HTML directo al modelo y usar `dangerouslySetInnerHTML` — introduce riesgo real de XSS si el corpus o el usuario logran colar HTML/scripts en el contexto que termina en la respuesta, y los modelos son menos consistentes generando HTML válido que Markdown. `react-markdown` logra el mismo resultado visual (texto formateado, no símbolos literales) sin ese riesgo. El fallo de Jest con "Unexpected token 'export'" se resolvió leyendo el código fuente de `next/jest`, que documenta explícitamente que la config de test solo puede *agregar* patrones a `transformIgnorePatterns`, no reemplazar el `/node_modules/` por defecto — el mecanismo soportado es `transpilePackages` en `next.config.mjs`.
+Alternativas consideradas: Modelo devuelve HTML + `dangerouslySetInnerHTML` — descartada por riesgo de XSS. Intentar acotar `transformIgnorePatterns` a mano en `jest.config.js` — descartada tras confirmar en el código fuente que next/jest ignora esa opción para node_modules por diseño.
+Impacto: `flippy-web/components/ChatMessage.tsx`, `ChatMessage.module.css`, `next.config.mjs`, `package.json`/`package-lock.json` (nueva dependencia de producción `react-markdown`+`remark-gfm`). Sin cambios de backend. 2 tests Jest nuevos, 80/80 en verde, `tsc --noEmit` y build de producción limpios.
+════════════════════════════════════════════════════════
