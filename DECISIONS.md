@@ -674,3 +674,15 @@ Racional: El desarrollador pidió que el header del sidebar (logo/"Nuevo chat"/b
 Alternativas consideradas: Ninguna — es la solución estándar y mínima para este patrón de flexbox (contenedor de altura fija con una sola región scrolleable adentro).
 Impacto: `flippy-web/components/ChatSidebar.module.css`, `flippy-web/components/ChatWindow.module.css` (CSS puro, 4 líneas). Sin cambios de lógica ni de DOM — 20/20 tests de sidebar/window/chat-page sin cambios, build de producción limpio.
 ════════════════════════════════════════════════════════
+
+════════════════════════════════════════════════════════
+📋 HUB BLOCK — DECISIONS_FLIPPY.md
+════════════════════════════════════════════════════════
+Fecha: 2026-08-07
+Incremento: 27 — Scroll del documento eliminado; cabeceras e input realmente fijos
+Modelo: claude-opus-5
+Decisión: `min-height: 0` + `overflow: hidden` en `.sidebarPane`/`.mainPane`, `overflow: hidden` + `100dvh` en `.layout` (`app/chat/page.module.css`). `.messages` ancla la conversación abajo con `margin-top: auto` en el primer hijo en vez de `justify-content: flex-end`.
+Racional: El Incremento 26 fue incompleto — puso `overflow: hidden` en `.sidebar`/`.window` pero no en sus contenedores padre. El desarrollador reportó dos scrollbars simultáneos, evidencia de que el documento entero scrolleaba. `.sidebarPane`/`.mainPane` son grid items de `.layout` y comparten con los flex items el `min-height: auto` implícito: no se achican bajo su contenido, así que desbordaban el `height: 100vh` del grid. Se descartó `IOSInstallBanner` como causa alternativa leyendo el componente (devuelve `null` en desktop). Se agregó `100dvh` porque en mobile el chrome colapsable del navegador hace que `100vh` empuje la barra de input fuera de la pantalla visible — relevante siendo una PWA. El cambio de `justify-content: flex-end` a `margin-top: auto` evita el bug conocido en que el tope de una conversación larga que desborda queda inalcanzable por scroll.
+Alternativas consideradas: `position: fixed` en header/input — descartada por requerir compensar el alto con padding manual y romperse al cambiar el tamaño de la fuente. Mantener `justify-content: flex-end` — descartada por el bug de scroll en conversaciones largas.
+Impacto: `flippy-web/app/chat/page.module.css`, `flippy-web/components/ChatWindow.module.css` (CSS puro). 80/80 Jest, `tsc --noEmit` y build limpios — pero jsdom no calcula layout, así que el fix NO queda cubierto por los tests y depende de verificación visual del desarrollador. Segundo intento sobre el mismo síntoma: la lección es que en este layout hay que revisar toda la cadena de contenedores (documento → grid → panes → componentes), no solo el componente que se ve afectado.
+════════════════════════════════════════════════════════

@@ -12,9 +12,16 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
   gap: 11px;
   padding: 16px;
+}
+
+/* Anchors a short conversation to the bottom (no empty gap above the input).
+   Preferred over justify-content: flex-end, which makes the overflowing top of a
+   long conversation unreachable by scroll — the auto margin collapses to 0 once
+   the content is taller than the container. */
+.messages > *:first-child {
+  margin-top: auto;
 }
 
 .messagesLoading {

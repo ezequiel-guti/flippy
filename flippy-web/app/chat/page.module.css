@@ -12,14 +12,25 @@
   display: grid;
   grid-template-columns: 280px 1fr;
   height: 100vh;
+  /* dvh accounts for the collapsing browser chrome on mobile, where 100vh
+     overshoots the visible area and pushes the input bar off-screen. */
+  height: 100dvh;
+  overflow: hidden;
 }
 
+/* Grid items default to min-height: auto, so they refuse to shrink below their
+   content and spill out of the 100dvh container — that overflow is what made the
+   whole document scroll instead of just the chat list and message list. */
 .sidebarPane {
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .mainPane {
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
