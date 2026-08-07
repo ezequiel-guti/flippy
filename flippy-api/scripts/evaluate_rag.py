@@ -28,7 +28,7 @@ def load_queries() -> list[dict]:
 
 
 def evaluate(queries: list[dict], k: int = 5) -> dict:
-    from app.integrations.openai_embeddings import embed_text
+    from app.integrations.openai_embeddings import embed_texts
     from app.modules.chat import retrieval
 
     recall_hits: list[int] = []
@@ -38,11 +38,13 @@ def evaluate(queries: list[dict], k: int = 5) -> dict:
     per_query: list[dict] = []
 
     for q in queries:
-        embedding = embed_text(q["query"])
+        # Mismo camino que la ruta de chat (router.py): split + embed batcheado + search_multi.
+        # Para queries simples split_subqueries devuelve [query] y esto es idéntico al flujo previo.
+        subqueries = retrieval.split_subqueries(q["query"])
         predicted_intent = retrieval.classify_intent(q["query"]).name
-        chunks, _stale = retrieval.search(q["query"], embedding)
+        chunks, _stale = retrieval.search_multi(subqueries, embed_texts([sq.text for sq in subqueries]))
 
-        entry = {"id": q["id"], "predicted_intent": predicted_intent}
+        entry = {"id": q["id"], "predicted_intent": predicted_intent, "n_subqueries": len(subqueries)}
 
         if q.get("intent_expected"):
             intent_total += 1

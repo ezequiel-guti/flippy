@@ -6,7 +6,7 @@ from fastapi.responses import StreamingResponse
 
 from app.core.security import TokenData, get_current_user
 from app.integrations import anthropic_vision, gemini
-from app.integrations.openai_embeddings import embed_text
+from app.integrations.openai_embeddings import embed_text, embed_texts
 
 from . import retrieval
 from .model import ChatRename, ChatSummary, MessageCreate, MessageResponse
@@ -67,8 +67,12 @@ def send_message(chat_id: str, body: MessageCreate, current_user: TokenData = De
     ChatService.maybe_set_title_from_first_message(chat_id, body.content)
 
     history = ChatService.list_messages(chat_id)[:-1]
-    query_embedding = embed_text(body.content)
-    context_chunks, stale_notice = retrieval.search(body.content, query_embedding)
+    # Preguntas compuestas: se recupera una vez por sub-pregunta para que una consulta
+    # que mezcla intenciones (técnica + costo) no quede clasificada entera por la primera
+    # keyword que matchee. embed_texts embebe todas en una sola llamada a OpenAI.
+    subqueries = retrieval.split_subqueries(body.content)
+    embeddings = embed_texts([sq.text for sq in subqueries])
+    context_chunks, stale_notice = retrieval.search_multi(subqueries, embeddings)
     contents = build_contents(history, context_chunks, body.content, stale_notice)
 
     def event_stream():
