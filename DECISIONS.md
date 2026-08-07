@@ -662,3 +662,15 @@ Alternativas consideradas: Sacar "m2" de las keywords de `precio_actual` — des
 Hallazgo de corpus (lo más importante, y no se arregla con código): la prueba contra el corpus real mostró que para esta consulta el corpus solo tiene listas de precios y directorios de contactos. No existe ningún documento con la planificación técnica que NotebookLM sí responde (tomas por ambiente, secciones de cable, metros de cañería). NotebookLM la cita como `[conversación previa]` con números de mensaje — un log de comunidad numerado que no está cargado en Flippy. Ninguna mejora de recuperación puede producir contenido que no está indexado.
 Impacto: `flippy-api/app/modules/chat/retrieval.py` (dataclass `SubQuery`, `_sub_with_preamble`, `_rank_for_subquery` clasifica por `intent_text`, `MAX_MERGED_CHUNKS` 12→8), `flippy-api/app/modules/chat/router.py` y `flippy-api/scripts/evaluate_rag.py` (embeben `sq.text`). 4 tests nuevos que fijan la separación de textos y la diversidad de intenciones (46 en `test_retrieval.py`).
 ════════════════════════════════════════════════════════
+
+════════════════════════════════════════════════════════
+📋 HUB BLOCK — DECISIONS_FLIPPY.md
+════════════════════════════════════════════════════════
+Fecha: 2026-08-07
+Incremento: 26 — Header, buscador y barra de input fijos en el chat
+Modelo: claude-sonnet-5
+Decisión: `min-height: 0` agregado a `.groups` (`ChatSidebar.module.css`) y `.messages` (`ChatWindow.module.css`); `overflow: hidden` en sus contenedores padre (`.sidebar`, `.window`).
+Racional: El desarrollador pidió que el header del sidebar (logo/"Nuevo chat"/buscador), el `ChatHeader` y la barra de input queden fijos, estilo WhatsApp. Causa raíz: bug clásico de flexbox — un hijo flex con `flex: 1` no se achica más allá del tamaño de su contenido a menos que se le fije `min-height: 0` explícito (el `min-height: auto` implícito por defecto lo impide). Sin eso, `.groups`/`.messages` empujaban el alto total de su contenedor padre en vez de scrollear internamente, arrastrando el resto de los elementos del sidebar/chat con el scroll general.
+Alternativas consideradas: Ninguna — es la solución estándar y mínima para este patrón de flexbox (contenedor de altura fija con una sola región scrolleable adentro).
+Impacto: `flippy-web/components/ChatSidebar.module.css`, `flippy-web/components/ChatWindow.module.css` (CSS puro, 4 líneas). Sin cambios de lógica ni de DOM — 20/20 tests de sidebar/window/chat-page sin cambios, build de producción limpio.
+════════════════════════════════════════════════════════

@@ -2,11 +2,13 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  overflow: hidden;
   background: var(--color-bg);
 }
 
 .messages {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
